@@ -1,7 +1,6 @@
-from dataclasses import dataclass
+from math import sin, cos, radians
 
 
-@dataclass
 class Position:
     def __init__(self, x, y, theata):
         self.x = x
@@ -23,5 +22,19 @@ class Position:
             theata += 360
 
         self.theata = theata
+
+        return self
+
+    def __change__(self, v, omega):
+        self.theata += omega
+        self.theata %= 360
+
+        if (self.theata < 0):
+            self.theata += 360
+
+        rad_theata = radians(self.theata)
+
+        self.x += v*cos(rad_theata)
+        self.y += v*sin(rad_theata)
 
         return self
