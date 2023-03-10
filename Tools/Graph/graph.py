@@ -1,12 +1,23 @@
 import matplotlib.pyplot as plt
 from json import load
 
+try:
+    with open('Tools/Graph/graph.json', 'r') as file:
 
-with open('Tools/Graph/graph.json', 'r') as file:
-    data = load(file)
-    plt.plot(data['x'], data['y'])
+        data = load(file)
+        keys = list(data.keys())
 
-plt.xlabel('Seconds')
-plt.ylabel('Degrees')
-plt.title('Time-Angle')
-plt.show()
+        for key in keys:
+            if 'x' in key:
+                num = key[1]
+                plt.plot(data[key], data['y'+num])
+
+        plt.plot(data['x'], data['y'])
+        plt.title(data['title'])
+        plt.xlabel(data['xlable'])
+        plt.ylabel(data['ylable'])
+
+    plt.show()
+
+except Exception as e:
+    print(e)
