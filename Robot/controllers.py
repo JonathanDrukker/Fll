@@ -1,4 +1,4 @@
-from pybricks.tools import StopWatch
+from time import time
 
 
 class PIDController:
@@ -7,7 +7,7 @@ class PIDController:
         self.Kp, self.Ki, self.Kd = Kp, Ki, Kd
         self.target = target
 
-        self.timer = StopWatch()
+        self.startTime = time()
         self.lastTime = 0
 
         self.lastError = 0
@@ -16,18 +16,17 @@ class PIDController:
 
     def correction(self, feedback: float, error=None) -> float:
 
-        time = self.timer.time()/1000
-
         if (error is None):
             error = self.target-feedback
-        dt = time-self.lastTime
 
+        _time = time()
+        dt = _time-self.lastTime
         if (dt == 0):
             dt += 0.0001
 
         correction = self.calc_correction(error, dt)
 
-        self.lastTime = time
+        self.lastTime = _time
         self.lastError = error
 
         return correction
