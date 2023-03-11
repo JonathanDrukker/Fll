@@ -2,7 +2,7 @@ def mean(*args: float) -> float:
     """
     This function returns the mean of the given numbers.
 
-    Parameters: Numbers
+    Parameters: Floats
     Returns: Mean-float
     """
 
