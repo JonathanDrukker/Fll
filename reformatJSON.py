@@ -10,12 +10,12 @@ with open('deploy\pathplanner\generatedJSON\Test.wpilib.json', 'r') as f:
     waypoints = []
     for dict in path:
         waypoint = {'time': dict['time'],
-                    'pose': (dict['pose']['translation']['x'],
-                             dict['pose']['translation']['y'],
+                    'pose': (dict['pose']['translation']['x']*100,
+                             dict['pose']['translation']['y']*100,
                              degrees(dict['pose']['rotation']['radians']))}
         waypoints.append(waypoint)
 
-    with open('Robot\path.waypoints', 'w') as f:
+    with open('Robot\Test.waypoints', 'w') as f:
         f.write(str(waypoints))
 
 print("Done!")
