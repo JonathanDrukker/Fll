@@ -39,9 +39,7 @@ class DriveBase:
             self.run_velocity(V, omega)
 
             if _print:
-                print("Pos: {", currentPos.__str__(), "}")
-                print("Target: {", targetPos.__str__(), "}")
-                print("V: ", V, ", W: ", omega)
+                print("Pos: ", currentPos, "\nTarget: ", targetPos, "\nV: ", V, "omega: ", omega)
 
     def calc_velocity(self, currentPos: Position, targetPos: Position, dt: float):
         Vx = targetPos.x - currentPos.x
@@ -49,18 +47,18 @@ class DriveBase:
 
         dist = sqrt(Vx**2 + Vy**2)
 
-        alpha = degrees(atan2(Vy, Vx)) - currentPos.theata
+        alpha = atan2(Vy, Vx) - radians(currentPos.theata)
 
-        h = dist/2*tan(radians(alpha))
+        h = dist/2*tan(alpha)
         r = (dist/2) + (h**2/(2*dist))
-        c = 2*pi*r
 
-        print(r)
+        beta = 2 * asin(dist/(2*r))
 
-        beta = degrees(2 * asin(dist/(2*r)))
+        V = r*beta/dt
+        omega = -2*alpha/dt
 
-        V = (c*(beta/360))/dt
-        omega = beta/dt
+        if (alpha > pi/2):
+            V = -V
 
         return V, omega
 
@@ -68,7 +66,6 @@ class DriveBase:
         self.runUpdatePos = False
         with self.lock:
             self.position = position
-        self.runUpdatePos = True
         _thread.start_new_thread(self.getPosition, ())
 
     def updatePos(self):
@@ -101,21 +98,28 @@ class DriveBase:
 
             past_angle = angle
 
+        self.runUpdatePos = True
+
     def getTargetPos(self, path, spareTime=0):
 
         startTime = time()
         cTime = 0
         index = 0
 
-        while cTime <= path[index]['time']:
+        while cTime <= path[-1]['time']:
             cTime = time()-startTime
 
             for index, dict in enumerate(path[index:]):
                 timeError = dict['time'] - cTime
-                if timeError > 0:
-                    yield path[index], timeError
 
-        while cTime <= path[-1]['time']+spareTime:
+                if timeError > 0:
+                    yield dict, timeError
+                    break
+
+        cTime = time()-startTime
+        timeError = path[-1]['time']+spareTime - cTime
+
+        while timeError > 0:
             cTime = time()-startTime
             timeError = path[-1]['time']+spareTime - cTime
             yield path[-1], timeError
