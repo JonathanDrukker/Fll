@@ -2,8 +2,6 @@ from json import load
 from math import degrees, sin, cos
 
 
-# {'x': x, 'y': y, 'theata': theata}
-
 DTA = 6
 
 print("Starting...")
@@ -15,11 +13,11 @@ with open('deploy\pathplanner\generatedJSON\Test.wpilib.json', 'r') as f:
     for dict in path:
 
         theata = dict['pose']['rotation']['radians']
-        x = -DTA*cos(theata) + dict['pose']['translation']['x']
-        y = -DTA*sin(theata) + dict['pose']['translation']['y']
+        x = dict['pose']['translation']['x']*100 - DTA*sin(theata)
+        y = dict['pose']['translation']['y']*100 - DTA*cos(theata)
 
         waypoint = {'time': dict['time'],
-                    'pose': (x*100, y*100, degrees(theata))}
+                    'pose': (x, y, degrees(theata))}
         waypoints.append(waypoint)
 
     with open('Robot\Test.waypoints', 'w') as f:
