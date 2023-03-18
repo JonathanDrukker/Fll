@@ -1,18 +1,25 @@
 from json import load
-from math import degrees
+from math import degrees, sin, cos
 
 
 # {'x': x, 'y': y, 'theata': theata}
 
+DTA = 6
+
 print("Starting...")
 with open('deploy\pathplanner\generatedJSON\Test.wpilib.json', 'r') as f:
+
     path = load(f)
     waypoints = []
+
     for dict in path:
+
+        theata = dict['pose']['rotation']['radians']
+        x = -DTA*cos(theata) + dict['pose']['translation']['x']
+        y = -DTA*sin(theata) + dict['pose']['translation']['y']
+
         waypoint = {'time': dict['time'],
-                    'pose': (dict['pose']['translation']['x']*100,
-                             dict['pose']['translation']['y']*100,
-                             degrees(dict['pose']['rotation']['radians']))}
+                    'pose': (x*100, y*100, degrees(theata))}
         waypoints.append(waypoint)
 
     with open('Robot\Test.waypoints', 'w') as f:
