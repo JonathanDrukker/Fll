@@ -12,6 +12,22 @@ def mean(*args: float) -> float:
     return sum(args)/len(args)
 
 
+def sign(x: int):
+    """
+    This function returns the sign of the given number.
+
+    Parameters: Number
+    Returns: Sign
+    """
+
+    if x > 0:
+        return 1
+    elif x < 0:
+        return -1
+    else:
+        return 0
+
+
 def thread(func):
     """
     This function is a decorator for threading a function.
