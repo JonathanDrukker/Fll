@@ -1,8 +1,10 @@
 from json import load
-from math import degrees, sin, cos
+from math import sin, cos, pi
 
 
-DTA = 6
+DTA = -2
+wheelRadius = 8.16/2
+wheelCircumference = 2*pi*wheelRadius
 
 print("Starting...")
 with open('deploy\pathplanner\generatedJSON\Test.wpilib.json', 'r') as f:
@@ -16,8 +18,14 @@ with open('deploy\pathplanner\generatedJSON\Test.wpilib.json', 'r') as f:
         x = dict['pose']['translation']['x']*100 - DTA*sin(theata)
         y = dict['pose']['translation']['y']*100 - DTA*cos(theata)
 
+        V = dict['velocity']*100
+        omega = dict['angularVelocity']
+
+        Vl = V/wheelCircumference*360 - omega
+        Vr = V/wheelCircumference*360 + omega
+
         waypoint = {'time': dict['time'],
-                    'pose': (x, y, degrees(theata))}
+                    'x': x, 'y': y, 'theata': theata, 'Vl': Vl, 'Vr': Vr}
         waypoints.append(waypoint)
 
     with open('Robot\Test.waypoints', 'w') as f:
