@@ -3,9 +3,9 @@ from pybricks.ev3devices import GyroSensor as _Gyro
 from pybricks.ev3devices import ColorSensor as _ColorSensor
 from pybricks.parameters import Port, Direction, Stop, Color
 from controllers import PIDController
-from time import time
-from mymath import mean
+from math import radians
 import _thread
+from mytools import mean
 
 
 class Motor:
@@ -99,39 +99,26 @@ class Motor:
 
         self.motor.run(speed)
 
-    def PIDRun(self, target: int, Kpid=None):
+    def PIDRun(self, target):
         """
-        This function runs the motor at the given speed using a PID controller.
+        This function runs the motor at the given speed with a PID controller
 
-        Parameters: Target-deg/s Kpid-(number, number, number)
+        Parameters: Target-degrees/s
 
         """
 
-        def run():
+        self.PID.target = target
+        self.run(self.PID.correction(self.getRawAngle()) + target)
 
-            if Kpid:
-                Kp, Ki, Kd = Kpid
-            else:
-                Kp, Ki, Kd = self.Kp, self.Ki, self.Kd
+    def resetPID(self, target: int = 0):
+        """
+        This function resets the PID controller.
 
-            PID = PIDController(Kp, Ki, Kd, target)
+        Parameters: Target-degrees
 
-            pastAngle = self.getRawAngle()
-            pastTime = time()
+        """
 
-            while self.runFunc:
-                angle = self.getRawAngle()
-                cTime = time()
-
-                vel = (angle-pastAngle)/(cTime-pastTime)
-                correction = PID.correction(vel)
-
-                if self.runFunc:
-                    self.run(target+correction)
-
-            self.runFunc = True
-
-        _thread.start_new_thread(run, ())
+        self.PID = PIDController(self.Kp, self.Ki, self.Kd, 0)
 
     def runAngle(self, target: int, speed: int, stop: Stop, wait=True):
         """
@@ -154,6 +141,16 @@ class Motor:
         """
 
         self.motor.run_target(speed, target, stop, wait)
+
+    def dc(self, duty):
+        """
+        This function runs the motor at the given duty cycle.
+
+        Parameters: Duty-cycle(-100-100)
+
+        """
+
+        self.motor.dc(duty)
 
     def stop(self):
         """
@@ -222,6 +219,16 @@ class Motor:
 
         return self.motor.angle()
 
+    def getRot(self) -> int:
+        """
+        This function returns the motor's rotation.
+
+        Returns: Rotation-revolutions(-inf-inf)
+
+        """
+
+        return self.getRawAngle() / 360
+
     def getSpeed(self) -> int:
         """
         This function returns the motor's speed.
@@ -263,6 +270,26 @@ class Gyro:
         """
 
         return self.getRawAngle() % 360
+
+    def getRawRadians(self) -> float:
+        """
+        This function returns the gyro's angle.
+
+        Returns: Angle-radians(-inf-inf)
+
+        """
+
+        return radians(self.getRawAngle())
+
+    def getRadians(self) -> float:
+        """
+        This function returns the gyro's angle.
+
+        Returns: Angle-radians(0-2pi)
+
+        """
+
+        return radians(self.getAngle())
 
     def getSpeed(self) -> int:
         """
