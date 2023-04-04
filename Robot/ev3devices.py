@@ -4,6 +4,7 @@ from pybricks.ev3devices import ColorSensor as _ColorSensor
 from pybricks.parameters import Port, Direction, Stop, Color
 from controllers import PIDController
 from math import radians
+from time import time
 import _thread
 from mytools import mean
 
@@ -14,11 +15,16 @@ class Motor:
     runFunc = True
 
     def __init__(self, Port: Port, Direction: Direction, Kpid=None):
+
         self.motor = _Motor(Port, Direction)
+
         if Kpid:
             self.Kp, self.Ki, self.Kd = Kpid
         else:
             self.Kp, self.Ki, self.Kd = 0, 0, 0
+
+        self.PID = PIDController(self.Kp, self.Ki, self.Kd, 0)
+        self.__generatorGetSpeed = self.__getSpeed()
 
     def PIDRunAngle(self, target: int, speed: int, range=(0, 0),
                     Kpid=None, wait=True):
@@ -108,9 +114,9 @@ class Motor:
         """
 
         self.PID.target = target
-        self.run(self.PID.correction(self.getRawAngle()) + target)
+        self.run(self.PID.correction(self.getSpeed()) + target)
 
-    def resetPID(self, target: int = 0):
+    def resetPID(self, Kpid: float = None, target: int = 0):
         """
         This function resets the PID controller.
 
@@ -118,7 +124,13 @@ class Motor:
 
         """
 
-        self.PID = PIDController(self.Kp, self.Ki, self.Kd, 0)
+        self.__generatorGetSpeed = self.__getSpeed()
+        if Kpid:
+            self.PID = PIDController(*Kpid, target=target,
+                                     feedback=self.getSpeed())
+        else:
+            self.PID = PIDController(self.Kp, self.Ki, self.Kd, target=target,
+                                     feedback=self.getSpeed())
 
     def runAngle(self, target: int, speed: int, stop: Stop, wait=True):
         """
@@ -229,7 +241,7 @@ class Motor:
 
         return self.getRawAngle() / 360
 
-    def getSpeed(self) -> int:
+    def getRawSpeed(self) -> int:
         """
         This function returns the motor's speed.
 
@@ -238,6 +250,37 @@ class Motor:
         """
 
         return self.motor.speed()
+
+    def getSpeed(self) -> int:
+        """
+        This function returns the motor's speed calculated
+        since the last time the function was called.
+
+        Returns: Speed-deg/s
+
+        """
+
+        return next(self.__generatorGetSpeed)
+
+    def __getSpeed(self) -> int:
+        """
+        This function returns the motor's speed calculated
+        since the last time the function was called.
+
+        Returns: Speed-deg/s
+
+        """
+
+        pastAngle = self.getRawAngle()
+        pastTime = time()
+
+        while True:
+
+            angle = self.getRawAngle()
+            cTime = time()
+            yield (angle-pastAngle)/(cTime-pastTime)
+            pastAngle = angle
+            pastTime = cTime
 
 
 class Gyro:
