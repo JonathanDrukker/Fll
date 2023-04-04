@@ -16,7 +16,8 @@ class Client:
     def recv(self):
         return Message.recv(self.sock)
 
-    def close(self):
+    def quit(self):
+        self.send(Message('quit', ''))
         self.sock.close()
 
 
