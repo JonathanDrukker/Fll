@@ -1,15 +1,13 @@
 from json import load
-from math import sin, cos, pi
+from math import sin, cos
 from Tools.graph import graph as _graph
 
 
 DTA = 2
-wheelRadius = 8.16/2
-wheelCircumference = 2*pi*wheelRadius
 DBM = 9.5
 halfDBM = DBM/2
 
-graph = True
+graph = False
 
 print("Starting...")
 with open('deploy\pathplanner\generatedJSON\Test.wpilib.json', 'r') as f:
@@ -29,8 +27,8 @@ with open('deploy\pathplanner\generatedJSON\Test.wpilib.json', 'r') as f:
         V = dict['velocity']*100
         omega = dict['angularVelocity']
 
-        Vl = V/wheelCircumference*360 - omega*halfDBM/wheelCircumference*360
-        Vr = V/wheelCircumference*360 + omega*halfDBM/wheelCircumference*360
+        Vl = V - omega*halfDBM
+        Vr = V + omega*halfDBM
 
         waypoint = {'time': dict['time'],
                     'x': x, 'y': y, 'theata': theata, 'Vl': Vl, 'Vr': Vr}
