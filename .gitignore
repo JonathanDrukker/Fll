@@ -142,3 +142,4 @@ deploy/pathplanner/generatedJSON/Run 1.wpilib.json
 Robot/Comms/ipAdd
 Tools/Comms/ipAdd
 Tools/Comms/ipAdd
+setupServer.bat
