@@ -16,12 +16,13 @@ class Client:
     def recv(self):
         return Message.recv(self.sock)
 
-    def close(self):
+    def quit(self):
+        self.send(Message('quit', ''))
         self.sock.close()
 
 
 def main():
-    with open('Comms/ipAdd', 'r') as f:
+    with open('ipAdd', 'r') as f:
         ip = f.read()
     client = Client(ip, 5000)
     try:
