@@ -8,41 +8,45 @@ class Server:
         self.host = host
         self.port = port
 
-        self.handlers = []
+        self.clients = []
 
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.bind((self.host, self.port))
         self.sock.listen(1)
 
-    def sendEveryone(self, msg):
-        for handler in self.handlers:
-            handler.send(msg)
+    def sendAll(self, msg):
+        for client in self.clients:
+            client.send(msg)
 
     def accept(self):
         conn, addr = self.sock.accept()
-        handeler = MessageHandler(conn)
-        self.handlers.append(handeler)
-        return handeler
+        client = MessageHandler(conn)
+        self.clients.append(client)
+        return client
 
-    def handle(self, handler):
+    def remove(self, client):
+        client.sock.close()
+        self.clients.remove(client)
+
+    def handle(self, client):
         try:
-            x, y = [], []
             while True:
-                msg = handler.recv()
+                msg = client.recv()
                 if msg:
-                    if msg.msg_type == 'quit':
-                        break
-                    elif msg.msg_type == 'pos':
-                        lst = eval(msg.msg_data)
-                        x.append(lst[0]); y.append(lst[1])
-                    elif msg.msg_type == 'save':
-                        with open('G:\My Drive\GitHub\Fll\Tools\graph.data', 'w') as f:
-                            f.write(str({'x0': x, 'y0': y}))
-                            print("Saved")
 
-        finally:
-            self.handlers.remove(handler)
-            handler.sock.close()
+                    if 'graphData' in msg.msg_type:
+                        self.sendAll(msg)
+
+                    elif msg.msg_type == 'showGraph':
+                        self.sendAll(msg)
+
+                    elif msg.msg_type == 'quit':
+                        self.remove(client)
+                        break
+
+        except Exception as e:
+            print("Error raised:", e)
+            self.remove(client)
 
 
 def main():
@@ -53,8 +57,8 @@ def main():
     print("SERVER up on IP: ", ip, " Port: 5000")
 
     while True:
-        handler = server.accept()
-        Thread(target=server.handle, args=(handler,)).start()
+        client = server.accept()
+        Thread(target=server.handle, args=(client,)).start()
 
 
 if __name__ == '__main__':
