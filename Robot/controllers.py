@@ -2,7 +2,7 @@ from time import time
 
 
 class PIDController:
-    def __init__(self, Kp: float, Ki: float, Kd: float, target: float):
+    def __init__(self, Kp: float, Ki: float, Kd: float, target: float, feedback: float = 0):
 
         self.Kp, self.Ki, self.Kd = Kp, Ki, Kd
         self.target = target
@@ -10,7 +10,7 @@ class PIDController:
         self.startTime = time()
         self.lastTime = 0
 
-        self.lastError = 0
+        self.lastError = target-feedback
 
         self.integral = 0
 
