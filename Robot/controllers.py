@@ -21,8 +21,7 @@ class PIDController:
 
         _time = time()
         dt = _time-self.lastTime
-        if (dt == 0):
-            dt += 0.0001
+        if (dt == 0): dt += 0.0001
 
         correction = self.calc_correction(error, dt)
 
