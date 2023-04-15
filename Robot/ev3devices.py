@@ -22,9 +22,9 @@ class Motor:
             self.Kp, self.Ki, self.Kd = Kpid
         else:
             self.Kp, self.Ki, self.Kd = 0, 0, 0
-
         self.PID = PIDController(self.Kp, self.Ki, self.Kd, 0)
-        self.__generatorGetSpeed = self.__getSpeed()
+
+        self.resetSpeed()
 
     def PIDRunAngle(self, target: int, speed: int, range=(0, 0),
                     Kpid=None, wait=True):
@@ -124,13 +124,12 @@ class Motor:
 
         """
 
-        self.__generatorGetSpeed = self.__getSpeed()
         if Kpid:
             self.PID = PIDController(*Kpid, target=target,
-                                     feedback=self.getSpeed())
+                                     feedback=self.resetSpeed())
         else:
             self.PID = PIDController(self.Kp, self.Ki, self.Kd, target=target,
-                                     feedback=self.getSpeed())
+                                     feedback=self.resetSpeed())
 
     def runAngle(self, target: int, speed: int, stop: Stop, wait=True):
         """
@@ -251,7 +250,7 @@ class Motor:
 
         return self.motor.speed()
 
-    def getSpeed(self) -> int:
+    def getSpeed(self) -> float:
         """
         This function returns the motor's speed calculated
         since the last time the function was called.
@@ -262,7 +261,17 @@ class Motor:
 
         return next(self.__generatorGetSpeed)
 
-    def __getSpeed(self) -> int:
+    def resetSpeed(self) -> float:
+        """
+        This function returns the motor's speed
+        and resets the getSpeed generator.
+
+        Returns: Speed-deg/s
+
+        """
+        self.__generatorGetSpeed = self.__getSpeed()
+
+    def __getSpeed(self) -> float:
         """
         This function returns the motor's speed calculated
         since the last time the function was called.
