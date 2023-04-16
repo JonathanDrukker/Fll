@@ -1,7 +1,7 @@
 from Comms.client import Client
 from graph import graph
 
-with open('Comms/ipAdd', 'r') as f:
+with open('Comms/IP/ipAdd', 'r') as f:
     ip = f.read()
 print("Connecting to server... IP: ", ip)
 client = Client(ip, 5000)
