@@ -127,7 +127,6 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-.flake8
 .pathplanner/settings.json
 Robot/test.py
 *.waypoints
