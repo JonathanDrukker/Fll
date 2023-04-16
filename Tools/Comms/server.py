@@ -51,7 +51,7 @@ class Server:
 
 def main():
 
-    with open('ipAdd', 'r') as f: ip = f.read()
+    with open('IP/ipAdd', 'r') as f: ip = f.read()
     server = Server(ip, 5000)
 
     print("SERVER up on IP: ", ip, " Port: 5000")

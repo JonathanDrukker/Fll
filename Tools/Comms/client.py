@@ -22,7 +22,7 @@ class Client:
 
 
 def main():
-    with open('ipAdd', 'r') as f:
+    with open('IP/ipAdd', 'r') as f:
         ip = f.read()
     client = Client(ip, 5000)
     try:
