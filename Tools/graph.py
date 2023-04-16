@@ -22,7 +22,7 @@ def graph(data: dict):
 
 def main():
     print("Starting...")
-    with open('graph.data', 'r') as file:
+    with open('Data/graph.data', 'r') as file:
         graph(eval(file.read()))
     print("Done!")
 
