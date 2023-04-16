@@ -270,6 +270,7 @@ class Motor:
 
         """
         self.__generatorGetSpeed = self.__getSpeed()
+        return next(self.__generatorGetSpeed)
 
     def __getSpeed(self) -> float:
         """
