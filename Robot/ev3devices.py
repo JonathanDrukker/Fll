@@ -24,8 +24,6 @@ class Motor:
             self.Kp, self.Ki, self.Kd = 0, 0, 0
         self.PID = PIDController(self.Kp, self.Ki, self.Kd, 0)
 
-        self.resetSpeed()
-
     def PIDRunAngle(self, target: int, speed: int, range=(0, 0),
                     Kpid=None, wait=True):
         """
