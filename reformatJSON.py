@@ -42,6 +42,6 @@ with open('deploy\pathplanner\generatedJSON\Test.wpilib.json', 'r') as f:
         f.write(str(waypoints))
 
 if graph:
-    _graph({'x0': X, 'y0': Y, 'title': 'Planned Path', 'lables': ['X', 'Y']})
+    _graph({'x0': X, 'y0': Y, 'c0': 'hsv', 'title': 'Planned Path', 'lables': ['X', 'Y']})
 
 print("Done!")
