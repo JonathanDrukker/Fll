@@ -27,11 +27,8 @@ with open('deploy\pathplanner\generatedJSON\Test.wpilib.json', 'r') as f:
         V = dict['velocity']*100
         omega = dict['angularVelocity']
 
-        Vl = V - omega*halfDBM
-        Vr = V + omega*halfDBM
-
         waypoint = {'time': dict['time'],
-                    'x': x, 'y': y, 'theata': theata, 'Vl': Vl, 'Vr': Vr}
+                    'x': x, 'y': y, 'theata': theata, 'V': V, 'omega': omega}
         waypoints.append(waypoint)
 
         if graph:
