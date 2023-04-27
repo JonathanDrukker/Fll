@@ -15,7 +15,7 @@ drivebase = DriveBase((Port.D, Direction.CLOCKWISE),
                       (Port.B, Direction.CLOCKWISE),
                       (Port.S3, Direction.COUNTERCLOCKWISE,
                       Port.S4, Direction.COUNTERCLOCKWISE),
-                      8.16/2, 9.5, [0, 0, 0])
+                      8.16/2, 9.5, 0, 0, 0)
 
 
 with open('Comms/ipAdd', 'r') as f:
@@ -27,7 +27,7 @@ print("Connected to server! IP: ", ip)
 
 with open('Test.waypoints', 'r') as f:
     data = eval(f.read())
-    drivebase.trackPath(data, 1, 0, True, client)
+    drivebase.trackPath(data, 0.05, 0.1, True, client)
 
 with drivebase.lock:
     client.send(Message('showGraph', ''))
