@@ -19,7 +19,7 @@ class Robot(DriveBase):
         self.rBiasList = [i/1000 for i in range(1000)
                           for _ in range(int((-(i/1000-rBias)**2 + rBias**2) * 1000))]
 
-    def trackPath(self, path, Kp, _print=False, _graph=False):
+    def trackPath(self, path, b, zeta, _print=False, _graph=False):
 
         self.resetPos(path[0]['x'], path[0]['y'], path[0]['theata'])
 
@@ -28,16 +28,14 @@ class Robot(DriveBase):
             Xw, Yw = [], []
 
         for index, waypoint in enumerate(path[1:]):
-
-            Vx, Vy = (waypoint['x'] - self.x) * Kp, (waypoint['y'] - self.y) * Kp
-
             Dt = waypoint['time'] - path[index]['time']
 
-            Vl, Vr = self.calc_velocity(Vx, Vy, self.theata, self.halfDBM)
+            Vx, Vy = waypoint['x'] - self.x, waypoint['y'] - self.y
 
-            self.drive(self.motorSpeed(waypoint['Vl'] + Vl),
-                       self.motorSpeed(waypoint['Vr'] + Vr),
-                       Dt)
+            Vl, Vr = self.calc_velocity(Vx, Vy, self.theata, self.halfDBM,
+                                        waypoint['V'], waypoint['omega'], b, zeta)
+
+            self.drive(self.motorSpeed(Vl), self.motorSpeed(Vr), Dt)
 
             if (_print):
                 print("Pos:", self.x, self.y, self.theata,
@@ -51,7 +49,7 @@ class Robot(DriveBase):
                 Yw.append(waypoint['y'])
 
         if _graph:
-            graph({'xr': Xr, 'yr': Yr, 'xw': Xw, 'yw': Yw,
+            graph({'xr': Xr, 'yr': Yr, 'xw': Xw, 'yw': Yw, 'cr': 'hsv', 'cw': 'hsv',
                    'title': 'Simulation', 'label': ('X', 'Y')})
 
     def drive(self, Vl, Vr, t):
@@ -77,6 +75,9 @@ class Robot(DriveBase):
     def motorSpeed(self, V):
         return V/self.wheelCircumference
 
+    def resetPos(self, x, y, theata):
+        self.x, self.y, self.theata = x, y, theata
+
     def updatePosition(self):
         pass
 
@@ -89,7 +90,7 @@ def main():
     with open('Robot/Test.waypoints', 'r') as file:
         path = eval(file.read())
 
-    robot.trackPath(path, 0.01, _print=False, _graph=True)
+    robot.trackPath(path, 1, 1, _print=True, _graph=True)
 
     print("Done!")
 
