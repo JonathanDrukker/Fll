@@ -24,7 +24,7 @@ while True:
             Y1.append(y)
 
     elif msg.msg_type == 'showGraph':
-        graph({'xP': X0, 'yP': Y0, 'xW': X1, 'yW': Y1})
+        graph({'xP': X0, 'yP': Y0, 'xW': X1, 'yW': Y1, 'cP': 'hsv', 'cW': 'hsv'})
         X0, Y0 = [], []
         X1, Y1 = [], []
 
