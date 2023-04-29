@@ -14,7 +14,7 @@ class PIDController:
 
         self.integral = 0
 
-    def correction(self, feedback: float, error=None) -> float:
+    def correction(self, feedback: float, error: float = None) -> float:
 
         if (error is None):
             error = self.target-feedback
