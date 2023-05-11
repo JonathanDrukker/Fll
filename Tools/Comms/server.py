@@ -4,6 +4,7 @@ from threading import Thread
 
 
 class Server:
+
     def __init__(self, host, port):
         self.host = host
         self.port = port
@@ -30,23 +31,25 @@ class Server:
 
     def handle(self, client):
         try:
+            with open('Logs/runtime.log', 'w') as f: f.write('(')
             while True:
                 msg = client.recv()
                 if msg:
-
-                    if 'graphData' in msg.msg_type:
-                        self.sendAll(msg)
-
-                    elif msg.msg_type == 'showGraph':
-                        self.sendAll(msg)
-
-                    elif msg.msg_type == 'quit':
+                    if msg.msg_type == 'quit':
+                        client.close()
                         self.remove(client)
                         break
+                    elif msg.msg_type == 'log':
+                        with open('Logs/runtime.log', 'a') as f:
+                            f.write(msg.msg_data + ',\n')
+                        self.sendAll(msg)
+                    else:
+                        self.sendAll(msg)
 
         except Exception as e:
             print("Error raised:", e)
             self.remove(client)
+        with open('Logs/runtime.log', 'a') as f: f.write(')')
 
 
 def main():
