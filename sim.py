@@ -1,7 +1,8 @@
-from Tools.graph import graph
+from Tools.graph import log_graph
 from pybricks.parameters import Port, Direction
 from Robot.drivebase import DriveBase
-from math import pi, sin, cos
+from Robot.controllers import RAMSETEController
+from math import pi, sin, cos, degrees
 from random import choice
 
 
@@ -19,57 +20,50 @@ class Robot(DriveBase):
         self.rBiasList = [i/1000 for i in range(1000)
                           for _ in range(int((-(i/1000-rBias)**2 + rBias**2) * 1000))]
 
-    def trackPath(self, path, b, zeta, _print=False, _graph=False):
+    def trackPath(self, path, b, zeta, _print=False, _logVar=None):
 
         self.resetPos(path[0]['x'], path[0]['y'], path[0]['theata'])
-
-        if _graph:
-            Xr, Yr = [], []
-            Xw, Yw = [], []
+        RAMSETE = RAMSETEController(b, zeta, self.halfDBM)
 
         for index, waypoint in enumerate(path[1:]):
             Dt = waypoint['time'] - path[index]['time']
 
             Vx, Vy = waypoint['x'] - self.x, waypoint['y'] - self.y
 
-            Vl, Vr = self.calc_velocity(Vx, Vy, self.theata, self.halfDBM,
-                                        waypoint['V'], waypoint['omega'], b, zeta)
+            Vl, Vr = RAMSETE.correction(Vx, Vy, self.theata,
+                                        waypoint['V'], waypoint['omega'], waypoint['theata'])
 
             self.drive(self.motorSpeed(Vl), self.motorSpeed(Vr), Dt)
 
-            if (_print):
-                print("Pos:", self.x, self.y, self.theata,
-                      "\nTarget:", waypoint['x'], waypoint['y'],
-                      "\nVx:", Vx, "Vy:", Vy, "\nVl:", Vl, "Vr:", Vr)
+            data = {'time': waypoint['time'],
+                    'robot': {
+                    'Pose': (self.x, self.y, self.theata),
+                    'gyroRate': degrees(self.omega),
+                    'V': (self.Vl*360, self.Vr*360),
+                    'Vtarget': (Vl/self.wheelCircumference*360, Vr/self.wheelCircumference*360)},
+                    'waypoint': waypoint}
 
-            if _graph:
-                Xr.append(self.x)
-                Yr.append(self.y)
-                Xw.append(waypoint['x'])
-                Yw.append(waypoint['y'])
-
-        if _graph:
-            graph({'xr': Xr, 'yr': Yr, 'xw': Xw, 'yw': Yw, 'cr': 'hsv', 'cw': 'hsv',
-                   'title': 'Simulation', 'label': ('X', 'Y')})
+            if _print: print(data)
+            if _logVar is not None: _logVar.append(data)
 
     def drive(self, Vl, Vr, t):
 
-        Vl -= 0.01*Vl*choice(self.lBiasList)
-        Vr -= 0.01*Vr*choice(self.rBiasList)
+        self.Vl = Vl - 0.01*Vl*choice(self.lBiasList)
+        self.Vr = Vr - 0.01*Vr*choice(self.rBiasList)
 
-        Vl, Vr = Vl*t, Vr*t
+        Dl, Dr = Vl*t, Vr*t
 
-        V = self.wheelCircumference/2*(Vr + Vl)
-        omega = self.wheelCircumference / self.DBM * (Vr - Vl)
+        self.Velocity = self.wheelCircumference/2*(Dl+Dr)
+        self.omega = self.wheelCircumference / self.DBM * (Dr-Dl)
 
-        theata = self.theata + omega
+        theata = self.theata + self.omega
         if theata > pi:
             theata -= 2*pi
         elif theata < -pi:
             theata += 2*pi
 
-        self.x += V*cos(theata)
-        self.y += V*sin(theata)
+        self.x += self.Velocity*cos(theata)
+        self.y += self.Velocity*sin(theata)
         self.theata = theata
 
     def motorSpeed(self, V):
@@ -78,19 +72,21 @@ class Robot(DriveBase):
     def resetPos(self, x, y, theata):
         self.x, self.y, self.theata = x, y, theata
 
-    def updatePosition(self):
+    def odometry(self):
         pass
 
 
 def main():
     print("Starting...")
 
-    robot = Robot(0, 0, 0, 8.16/2, 9.5, 0.602, 0.512)
+    robot = Robot(0, 0, 0, 8.16, 9.5, 0.602, 0.512)
 
     with open('Robot/Test.waypoints', 'r') as file:
         path = eval(file.read())
 
-    robot.trackPath(path, 1, 1, _print=True, _graph=True)
+    log = []
+    robot.trackPath(path, 1, 1, _print=False, _logVar=log)
+    log_graph(log, robot.wheelDiameter, robot.DBM)
 
     print("Done!")
 
