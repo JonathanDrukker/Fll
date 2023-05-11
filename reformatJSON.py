@@ -10,7 +10,7 @@ halfDBM = DBM/2
 graph = False
 
 print("Starting...")
-with open('deploy\pathplanner\generatedJSON\Test.wpilib.json', 'r') as f:
+with open('deploy\pathplanner\generatedJSON\Run 1.wpilib.json', 'r') as f:
 
     path = load(f)
     waypoints = []
@@ -27,8 +27,10 @@ with open('deploy\pathplanner\generatedJSON\Test.wpilib.json', 'r') as f:
         V = dict['velocity']*100
         omega = dict['angularVelocity']
 
-        waypoint = {'time': dict['time'],
-                    'x': x, 'y': y, 'theata': theata, 'V': V, 'omega': omega}
+        acceleration = dict['acceleration']*100
+
+        waypoint = {'time': dict['time'], 'x': x, 'y': y, 'theata': theata,
+                    'V': V, 'omega': omega, 'acceleration': acceleration}
         waypoints.append(waypoint)
 
         if graph:
