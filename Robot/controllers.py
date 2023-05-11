@@ -1,4 +1,5 @@
 from time import time
+from math import sin, cos, sqrt, pi
 
 
 class PIDController:
@@ -37,3 +38,31 @@ class PIDController:
         d = (error-self.lastError)/dt
 
         return self.Kp*p + self.Ki*self.integral + self.Kd*d
+
+
+class RAMSETEController:
+    def __init__(self, b, zeta, halfDBM):
+
+        self.b = b
+        self.zeta = zeta
+
+        self.halfDBM = halfDBM
+
+    def correction(self, Vx, Vy, theata, V, Omega, theata_d):
+
+        cosTheata = cos(theata); sinTheata = sin(theata)
+
+        Ex = cosTheata*Vx + sinTheata*Vy
+        Ey = -sinTheata*Vx + cosTheata*Vy
+
+        Etheata = theata_d - theata
+        if (Etheata > pi): Etheata -= 2*pi
+        elif (Etheata < -pi): Etheata += 2*pi
+        if (Etheata == 0): Etheata = 0.00001
+
+        k = 2*self.zeta*sqrt(Omega**2 + self.b*V**2)
+
+        v = V*cos(Etheata) + k*Ex
+        omega = (Omega + k*Etheata + (self.b*V*sin(Etheata)*Ey)/Etheata) * self.halfDBM
+
+        return v - omega, v + omega
