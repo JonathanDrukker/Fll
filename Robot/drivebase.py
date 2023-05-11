@@ -1,9 +1,10 @@
 import _thread
 from ev3devices import Motor, DualGyro
-from math import sin, cos, atan2, pi, sqrt
+from math import sin, cos, pi
 from time import time
 from mytools import mean, thread # noqa
 from Comms.message import Message
+from controllers import RAMSETEController
 
 
 class DriveBase:
@@ -11,26 +12,28 @@ class DriveBase:
     lock = _thread.allocate_lock()
 
     def __init__(self, lMotor: tuple, rMotor: tuple, gyro: tuple,
-                 wheelRad: float, DBM: float,
+                 wheelDiameter: float, DBM: float,
                  x: float, y: float, theata: float):
 
         self.lm = Motor(*lMotor)
         self.rm = Motor(*rMotor)
         self.gyro = DualGyro(*gyro)
 
-        self.wheelRad = wheelRad
-        self.wheelCircumference = 2*pi*wheelRad
+        self.wheelRad = wheelDiameter/2
+        self.wheelDiameter = wheelDiameter
+        self.wheelCircumference = pi*wheelDiameter
 
         self.DBM = DBM
         self.halfDBM = DBM/2
 
         self.x, self.y = x, y
         self.theata = theata
-        self.updatePosition()
+        self.odometry()
 
-    def trackPath(self, path, b, zeta, _print=True, _client=None):
+    def trackPath(self, path, b, zeta, _print=True, _logfile=None, _client=None):
 
         self.resetPos(path[0]['x'], path[0]['y'], path[0]['theata'])
+        RAMSETE = RAMSETEController(b, zeta, self.halfDBM)
 
         for waypoint in self.getTargetPos(path):
 
@@ -40,73 +43,57 @@ class DriveBase:
 
             Vx, Vy = waypoint['x'] - currentX, waypoint['y'] - currentY
 
-            Vl, Vr = self.calc_velocity(Vx, Vy, currentTheata, self.halfDBM,
-                                        waypoint['V'], waypoint['omega'], b, zeta)
+            Vl, Vr = RAMSETE.correction(Vx, Vy, currentTheata,
+                                        waypoint['V'], waypoint['omega'], waypoint['theata'])
 
             self.run_tank(self.motorSpeed(Vl), self.motorSpeed(Vr))
 
-            if _print:
-                print("Pos: ", currentX, currentY, currentTheata,
-                      "\nTarget: ", waypoint['x'], waypoint['y'],
-                      "\nVx:", Vx, "Vy:", Vy, "\nVl: ", Vl, "Vr: ", Vr)
+            data = str({'time': time(),
+                        'robot': {
+                        'Pose': (currentX, currentY, currentTheata),
+                        'gyroRate': self.gyro.getSpeed(),
+                        'V': (self.lm.getSpeed(), self.rm.getSpeed()),
+                        'Vtarget': (self.lm.PID.target, self.rm.PID.target)},
+                        'waypoint': waypoint})
 
+            if _print: print(data)
+            if _logfile: _logfile.write(data + '\n')
             if _client:
-                with self.lock:
-                    _client.send(Message('graphData0', str((currentX, currentY))))
-                    _client.send(Message('graphData1', str((waypoint['x'], waypoint['y']))))
+                with self.lock: _client.send(Message('log', data))
 
-    @staticmethod
-    def calc_velocity(Vx, Vy, theata, halfDBM, V, Omega, b, zeta):
-
-        def sign(num):
-            if num > 0: return 1
-            elif num < 0: return -1
-            else: return 0
-
-        k1 = 2*zeta*sqrt(Omega**2 + b*V**2)
-        k2 = b*abs(V)
-
-        Vtheta = atan2(Vy, Vx) - theata
-        if (Vtheta > pi): Vtheta -= 2*pi
-        elif (Vtheta < -pi): Vtheta += 2*pi
-
-        v = V*cos(Vtheta) + k1*(cos(theata)*Vx + sin(theata)*Vy)
-        omega = (Omega + k2*sign(V) * (cos(theata)*Vy - sin(theata)*Vx) + k1*Vtheta) * halfDBM
-
-        return v - omega, v + omega
+        self.run_tank(0, 0)
 
     def motorSpeed(self, V):
         return V/self.wheelCircumference*360
 
     def run_tank(self, Vl, Vr):
+        self.targetVl, self.targetVr = Vl, Vr
         self.lm.PIDRun(Vl)
         self.rm.PIDRun(Vr)
 
     @thread
-    def updatePosition(self):
+    def odometry(self):
         self.__resetPos = None
 
         past_lm_pos, past_rm_pos = self.lm.getRot(), self.rm.getRot()
-        past_theata = self.gyro.getRawRadians()
 
         while True:
 
             lm_pos, rm_pos = self.lm.getRot(), self.rm.getRot()
-            theata = self.gyro.getRawRadians()
 
             Vl = lm_pos - past_lm_pos
             Vr = rm_pos - past_rm_pos
 
-            V = self.wheelCircumference/2*(Vr + Vl)
-            omega = self.wheelCircumference / self.DBM * (Vr - Vl)
-            # omega = mean(omega, theata-past_theata)
+            self.Velocity = self.wheelCircumference/2*(Vr + Vl)
+            self.omega = self.wheelCircumference / self.DBM * (Vr - Vl)
 
-            theata = self.theata + omega
+            # theata = mean(self.theata + omega, self.gyro.getRawRadians())
+            theata = self.theata + self.omega
             if (theata > pi): theata -= 2*pi
             elif (theata < -pi): theata += 2*pi
 
-            x = self.x + V*cos(theata)
-            y = self.y + V*sin(theata)
+            x = self.x + self.Velocity*cos(theata)
+            y = self.y + self.Velocity*sin(theata)
 
             with self.lock:
                 self.x, self.y, self.theata = x, y, theata
@@ -117,10 +104,10 @@ class DriveBase:
                 self.__resetPos = None
 
             past_lm_pos, past_rm_pos = lm_pos, rm_pos
-            past_theata = theata # noqa
 
     def resetPos(self, x, y, theata):
         self.__resetPos = [x, y, theata]
+        self.gyro.resetAngle(theata)
 
     @staticmethod
     def getTargetPos(path):
