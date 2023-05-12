@@ -119,8 +119,8 @@ def log_graph(log, wheelDiameter, DBM):
     for index, time in enumerate(formatted_log['time'][1:]):
         Vel = (formatted_log['robot']['V'][0][index]+formatted_log['robot']['V'][1][index])/720 * wheelCircumference
         delta_t = time - pastTime
-        if delta_t == 0: delta_t = 0.1
-        Acc.append((Vel-pastVel)/delta_t)
+        if delta_t == 0: Acc.append(0)
+        else: Acc.append((Vel-pastVel)/delta_t)
         pastVel = Vel
         pastTime = time
 
