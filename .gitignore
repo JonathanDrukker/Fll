@@ -128,18 +128,10 @@ dmypy.json
 # Pyre type checker
 .pyre/
 .pathplanner/settings.json
-Robot/test.py
 *.waypoints
 *.data
-*.path
-deploy/pathplanner/generatedJSON/Run 2.wpilib.json
-deploy/pathplanner/generatedJSON/Run 4.wpilib.json
-deploy/pathplanner/generatedJSON/Run 5.wpilib.json
-deploy/pathplanner/generatedJSON/Run 3.wpilib.json
-deploy/pathplanner/generatedJSON/Test.wpilib.json
-deploy/pathplanner/generatedJSON/Run 1.wpilib.json
+*.json
 Robot/Comms/ipAdd
-Tools/Comms/ipAdd
 Tools/Comms/ipAdd
 setupServer.bat
 Tools/Comms/IP/ipAdd
