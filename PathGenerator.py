@@ -2,169 +2,122 @@ import numpy as np
 from json import load
 from Tools.graph import log_graph
 from math import atan2, sqrt
+from time import time
 
 
-def generatePathBezier(path: dict, STEP: float, TIMESTEP: float, DBM: float):
+def generatePathBezier(path: dict, STEP: float, TIMESTEP: float, DBM: float, scale):
 
-    MAX_SPEED = path['maxVelocity']
-    MAX_ACCELARATION = path['maxAcceleration']
+    MAX_SPEED = path['maxVelocity']*scale
+    MAX_ACCELARATION = path['maxAcceleration']*scale
 
     HALF_DBM = DBM/2
 
-    spline = CubicBezierSpline2D(path['waypoints'], 100)
+    spline = CubicBezierSpline2D(path['waypoints'], scale)
 
     reversed = -1 if path['isReversed'] else 1
 
+    velocity_profile = VelocityProfile(MAX_SPEED, MAX_ACCELARATION, TIMESTEP, HALF_DBM)
+
+    sVelocity = 0 if not path['waypoints'][0]['velOverride'] else path['waypoints'][0]['velOverride']
+
     x, y = spline.Coordinates(0, 0)
-    velocityX, velocityY = spline.Velocity(0, 0)
-    accX, accY = spline.Acceleration(0, 0)
-    velocityX, velocityY, accX, accY = velocityX*reversed, velocityY*reversed, accX*reversed, accY*reversed
+    spline_velocity = multiply_list(spline.Velocity(0, 0), reversed)
 
-    theata = atan2(velocityY, velocityX)
-    velocity = 0 if not path['waypoints'][0]['velOverride'] else path['waypoints'][0]['velOverride']
+    theata = atan2(spline_velocity[1], spline_velocity[0])
 
-    k = (velocityX*accY - velocityY*accX) / (velocityX**2 + velocityY**2)**(3/2)
+    k = spline.Curvature(0, 0)
 
-    accL = MAX_ACCELARATION*reversed - k*MAX_ACCELARATION*HALF_DBM*reversed
-    accR = MAX_ACCELARATION*reversed + k*MAX_ACCELARATION*HALF_DBM*reversed
-    if abs(accL) > MAX_ACCELARATION and abs(accL) > abs(accR):
-        ratio = accR/accL
-        accL = MAX_ACCELARATION*reversed
-        accR = accL*ratio
-    elif abs(accR) > MAX_ACCELARATION and abs(accR) > abs(accL):
-        ratio = accL/accR
-        accR = MAX_ACCELARATION*reversed
-        accL = accR*ratio
+    accL, accR = velocity_profile.robot_velocity(
+        MAX_ACCELARATION*reversed, velocity_profile.Omega(MAX_ACCELARATION*reversed, k))
 
     # [x, y, theata, V, omega, leftAccel, rightAccel]
     waypoints = [{'time': 0, 'waypoint': {'x': x, 'y': y, 'theata': theata,
-                                          'V': velocity, 'omega': 0, 'leftAcc': accL, 'rightAcc': accR}}]
+                                          'V': sVelocity, 'omega': 0, 'leftAcc': accL, 'rightAcc': accR}}]
 
-    u = 0
+    velocity = velocity_profile.newVelocity(sVelocity, (accL+accR) / 2)
+    omega = velocity_profile.newOmega(0, (accR-accL)*HALF_DBM)
+
+    velMax, velOverload = None, None
+
     t = 1
     time = 0
-    for index, waypoint in enumerate(path['waypoints'][:-1]):
+    for u, waypoint in enumerate(path['waypoints'][:-1]):
 
-        reversed = -reversed if waypoint['isReversal'] else reversed
+        if waypoint['isReversal']:
+            reversed = -reversed
 
-        # (u, velocity)
-        for _index, _waypoint in enumerate(path['waypoints'][index:]):
-            if _waypoint['isStopPoint'] or _waypoint['isReversal']:
-                velOverload = (index+_index+1, 0)
-                velMaxEnd = None
+        # (u, t, velocity)
+        for _u, point in enumerate(path['waypoints'][u+1:]):
+            _u += 1
+            if point['velOverride']:
+                velOverload = (u+_u, 0, point['velOverride'])
+                velMax = None
                 break
-            elif _waypoint['velOverride']:
-                velOverload = (index+_index+1, _waypoint['velOverride'])
-                velMaxEnd = None
+            elif point['isStopPoint'] or point['isReversal']:
+                velOverload = (u+_u, 0, 0)
+                velMax = None
                 break
-            elif (_index+index+1) == len(path['waypoints']):
-                velOverload = (index+_index+1, 0)
-                velMaxEnd = None
+            elif (u+_u == len(path['waypoints'])-1):
+                velOverload = (u+_u-1, 1, 0)
+                velMax = None
                 break
             else:
-                _past_velocity = spline.Velocity(index+_index, 1)
-                _past_velocity = [i*reversed for i in _past_velocity]
-                _past_acc = spline.Acceleration(index+_index, 1)
-                _past_acc = [i*reversed for i in _past_acc]
-                _pastK = spline.Curvature(_past_velocity, _past_acc)
-
-                _velocity = spline.Velocity(index+_index+1, 0)
-                _velocity = [i*reversed for i in _velocity]
-                _acc = spline.Acceleration(index+_index+1, 0)
-                _acc = [i*reversed for i in _acc]
-                _k = spline.Curvature(_velocity, _acc)
-
-                deltaK = _k - _pastK
-
-                if (deltaK > 0):
-                    vel = sqrt(MAX_ACCELARATION*abs(1/k))
+                deltaK = spline.Curvature(u+_u-1, 1) - spline.Curvature(u+_u, 0)
+                if (deltaK < 0):
                     velOverload = None
-                    velMaxEnd = (index+_index+1, vel)
+                    velMax = (u+_u, 0, velocity_profile.curveVelocity(MAX_SPEED*reversed, k))
                     break
+
+        print(u)
 
         t -= 1
         while t < 1:
 
-            # deltaDist = velocity*TIMESTEP
-            # u, t = spline.findT(u, t, STEP, deltaDist)
-            t += 0.01
+            # TODO: uncomment
+            t = spline.newT(u, t, STEP, abs(velocity*TIMESTEP))
+            # t += 0.01
 
             time += TIMESTEP
 
-            lastWaypoint = waypoints[-1]['waypoint']
+            currentVelocity = velocity
+            currentOmega = omega
+            currentVl, currentVr = velocity_profile.robot_velocity(currentVelocity, currentOmega)
 
-            currentVelocity = lastWaypoint['V'] + (lastWaypoint['leftAcc'] + lastWaypoint['rightAcc'])/2*TIMESTEP
-            currentOmega = lastWaypoint['omega'] + (lastWaypoint['rightAcc'] - lastWaypoint['leftAcc']) / HALF_DBM * TIMESTEP
-            currentVl, currentVr = currentVelocity - currentOmega*HALF_DBM, currentVelocity + currentOmega*HALF_DBM
+            x, y = spline.Coordinates(u, t)
+            spline_velocity = multiply_list(spline.Velocity(u, t), reversed)
 
-            x, y = spline.Coordinates(index, t)
-            velocityX, velocityY = spline.Velocity(index, t)
-            accX, accY = spline.Acceleration(index, t)
+            theata = atan2(spline_velocity[1], spline_velocity[0])
 
-            velocityX, velocityY, accX, accY = velocityX*reversed, velocityY*reversed, accX*reversed, accY*reversed
-
-            theata = atan2(velocityY, velocityX)
-            k = spline.Curvature((velocityX, velocityY), (accX, accY))
-
-            acceleration = MAX_ACCELARATION * reversed if abs(velocity) + MAX_ACCELARATION * \
-                TIMESTEP < MAX_SPEED else (MAX_SPEED - abs(velocity))/TIMESTEP * reversed
+            k = spline.Curvature(u, t, reversed)
 
             if velOverload:
-                avgVel = ((velOverload[1] + velocity) / 2)
-                if (avgVel == 0):
-                    velocity += acceleration*TIMESTEP
+                avgVel = (currentVelocity+velOverload[2])/2
+
+                lengthLeft = spline.lengthBetween(u, t, velOverload[0], velOverload[1], STEP)
+                lengthDecel = (currentVelocity - velOverload[2]) / MAX_ACCELARATION * avgVel
+                if (lengthLeft > lengthDecel):
+                    target = MAX_SPEED * reversed
                 else:
-
-                    length = spline.lengthBetween(int(u), u-int(u), int(velOverload[0]),
-                                                  velOverload[0]-int(velOverload[0]), 0.01)
-
-                    time_deccel = (velocity - velOverload[1]) / MAX_ACCELARATION
-                    time_left = length / avgVel
-
-                    if (time_deccel < time_left):
-                        acceleration = MAX_ACCELARATION * reversed if abs(velocity) + MAX_ACCELARATION * \
-                            TIMESTEP < MAX_SPEED else (MAX_SPEED - abs(velocity))/TIMESTEP * reversed
-                        velocity += acceleration*TIMESTEP
-                    else:
-                        acceleration = MAX_ACCELARATION * reversed if abs(velocity) + MAX_ACCELARATION * \
-                            TIMESTEP < velOverload[1] else (velOverload[1] - abs(velocity))/TIMESTEP * reversed
-                        velocity -= acceleration*TIMESTEP
+                    target = velOverload[2]
             else:
-                if (velocity < velMaxEnd[1]):
-                    acceleration = MAX_ACCELARATION * reversed if abs(velocity) + MAX_ACCELARATION * \
-                        TIMESTEP < MAX_SPEED else (MAX_SPEED - abs(velocity))/TIMESTEP * reversed
-                    velocity += acceleration*TIMESTEP
+                avgVel = (currentVelocity+velMax[2])/2
+
+                lengthLeft = spline.lengthBetween(u, t, velMax[0], velMax[1], STEP)
+                lengthDecel = abs((currentVelocity - velMax[2]) / MAX_ACCELARATION) * avgVel
+
+                if (lengthLeft < lengthDecel):
+                    target = MAX_SPEED * reversed
                 else:
+                    target = velMax[2]
 
-                    avgVel = ((velMaxEnd[1] + velocity) / 2)
-                    if (avgVel == 0):
-                        velocity += acceleration*TIMESTEP
-                    else:
+            velocity = velocity_profile.curveVelocity(velocity_profile.Velocity(velocity, target), k)
+            omega = velocity_profile.Omega(velocity, k)
 
-                        length = spline.lengthBetween(int(u), u-int(u), int(velMaxEnd[0]),
-                                                      velMaxEnd[0]-int(velMaxEnd[0]), 0.01)
-
-                        time_deccel = (velocity - velMaxEnd[1]) / MAX_ACCELARATION
-                        time_left = length / avgVel
-
-                        if (time_deccel < time_left):
-                            acceleration = MAX_ACCELARATION * reversed if abs(velocity) + MAX_ACCELARATION * \
-                                TIMESTEP < MAX_SPEED else (MAX_SPEED - abs(velocity))/TIMESTEP * reversed
-                            velocity += acceleration*TIMESTEP
-                        else:
-                            acceleration = MAX_ACCELARATION * reversed if abs(velocity) + MAX_ACCELARATION * \
-                                TIMESTEP < velMaxEnd[1] else (velMaxEnd[1] - abs(velocity))/TIMESTEP * reversed
-                            velocity -= acceleration*TIMESTEP
-
-            velocity = min(abs(velocity), sqrt(MAX_ACCELARATION*abs(1/k))) * reversed
-
-            omega = k * velocity
-            Vl, Vr = velocity - omega*HALF_DBM, velocity + omega*HALF_DBM
-
-            accL, accR = (Vl - currentVl)/TIMESTEP, (Vr - currentVr)/TIMESTEP
+            Vl, Vr = velocity_profile.robot_velocity(velocity, omega)
+            accL, accR = velocity_profile.robot_acceleration(currentVl, currentVl, Vl, Vr)
 
             waypoints.append({'time': time, 'waypoint': {'x': x, 'y': y, 'theata': theata,
-                                                         'V': currentVelocity, 'omega': currentOmega,
+                                                         'V': velocity, 'omega': currentOmega,
                                                          'leftAcc': accL, 'rightAcc': accR}})
 
     return waypoints
@@ -195,32 +148,33 @@ class CubicBezierSpline2D:
     def Acceleration(self, u: int, t: float) -> list:
         return self.curves[u].Acceleration(t)
 
+    def Curvature(self, u: int, t: float, reverse: int = 1) -> float:
+        return self.curves[u].Curvature(t, reverse)
+
     def lengthBetween(self, u1: int, t1: float, u2: int, t2: float, step: float) -> float:
         if (u1 - u2 == 0):
             return self.curves[u1].lengthBetween(t1, t2, step)
         length = 0
-        for u in range(u1, u2):
-            if u == int(u1):
+        for u in range(u1, u2+1):
+            if (u == u1):
                 length += self.curves[u].lengthBetween(t1, 1, step)
-            elif u == int(u2):
+            elif (u == u2):
                 length += self.curves[u].lengthBetween(0, t2, step)
             else:
                 length += self.curves[u].lengthBetween(0, 1, step)
         return length
 
-    def findT(self, u: float, t: float, step: float, dist: float) -> float:
+    def newT(self, u: float, t: float, step: float, dist: float) -> float:
         pastX, pastY = self.Coordinates(u, t)
         while dist > 0:
             t += step
-            x, y = self.Coordinates(u, t+step)
+            x, y = self.Coordinates(u, t)
             dist -= sqrt((x-pastX)**2 + (y-pastY)**2)
             pastX, pastY = x, y
-        u += int(t)
-        t -= int(t)
-        return u, t
+        return t
 
     @staticmethod
-    def Curvature(Velocity: list, Acceleration: list) -> float:
+    def _curvature(Velocity: list, Acceleration: list) -> float:
         return (Velocity[0]*Acceleration[1] - Velocity[1]*Acceleration[0]) / (Velocity[0]**2 + Velocity[1]**2)**(3/2)
 
 
@@ -234,14 +188,19 @@ class CubicBezierCurve2D:
     def Coordinates(self, t: float) -> list:
         return (np.array([[1, t, t**2, t**3]]) @ self.CHARACTERISTIC_MATRIX_CUBIC_BEZIER @ self.points)[0, :]
 
-    def Velocity(self, t: float) -> list:
-        return (np.array([[0, 1, 2*t, 3*t**2]]) @ self.CHARACTERISTIC_MATRIX_CUBIC_BEZIER @ self.points)[0, :]
+    def Velocity(self, t: float, inverse: int = 1) -> list:
+        return multiply_list((np.array([[0, 1, 2*t, 3*t**2]]) @
+                              self.CHARACTERISTIC_MATRIX_CUBIC_BEZIER @ self.points)[0, :], inverse)
 
-    def Acceleration(self, t: float) -> list:
-        return (np.array([[0, 0, 2, 6*t]]) @ self.CHARACTERISTIC_MATRIX_CUBIC_BEZIER @ self.points)[0, :]
+    def Acceleration(self, t: float, inverse: int = 1) -> list:
+        return multiply_list((np.array([[0, 0, 2, 6*t]]) @
+                             self.CHARACTERISTIC_MATRIX_CUBIC_BEZIER @ self.points)[0, :], inverse)
+
+    def Curvature(self, t: float, inverse: int = 1) -> float:
+        return self.__curvature(multiply_list(self.Acceleration(t), inverse), multiply_list(self.Velocity(t), inverse))
 
     def lengthBetween(self, t1: float, t2: float, step: float) -> float:
-        length = 0.0
+        length = 0
         lastX, lastY = self.Coordinates(t1)
         for t in np.arange(t1+step, t2, step):
             x, y = self.Coordinates(t)
@@ -252,14 +211,88 @@ class CubicBezierCurve2D:
         return length
 
     @staticmethod
-    def Curvature(Velocity: list, Acceleration: list) -> float:
-        return (Velocity[0]*Acceleration[1] - Velocity[1]*Acceleration[0]) / sqrt(Velocity[0]**2 + Velocity[1]**2)**3
+    def __curvature(Velocity: list, Acceleration: list) -> float:
+        return (Velocity[0]*Acceleration[1] - Velocity[1]*Acceleration[0]) / (Velocity[0]**2 + Velocity[1]**2)**(3/2)
+
+
+class VelocityProfile:
+    def __init__(self, maxVelocity: float, maxAcceleration: float, timestep: float, half_DBM):
+        self.maxVelocity = maxVelocity
+        self.maxAcceleration = maxAcceleration
+        self.timestep = timestep
+        self.half_DBM = half_DBM
+
+    def Velocity(self, velocity, target):
+        velocity += self.Acceleration(velocity, target) * self.timestep
+        return min(abs(velocity), self.maxVelocity) * sign(velocity)
+
+    def newVelocity(self, velocity, acceleration):
+        return velocity + acceleration*self.timestep
+
+    def Omega(self, velocity, k):
+        return velocity * k
+
+    def newOmega(self, omega, acceleration):
+        return omega + acceleration*self.timestep
+
+    def Acceleration(self, velocity, target):
+        diff = target - velocity
+        return min(self.maxAcceleration, abs(diff)) * sign(diff)
+
+    def curveVelocity(self, velocity, k):
+        return min(abs(velocity), sqrt(self.maxAcceleration*abs(1/k))) * sign(velocity)
+
+    def robot_velocity(self, V, omega):
+        return V - omega*self.half_DBM, V + omega*self.half_DBM
+
+    def robot_acceleration(self, Vl0, Vr0, Vl1, Vr1):
+        return self.__acceleration(Vl0, Vl1), self.__acceleration(Vr0, Vr1)
+
+    def __acceleration(self, V0, V1):
+        return (V1 - V0)/self.timestep
+
+    def robot_velocity_limits(self, Vr, Vl):
+        if (abs(Vl) > self.maxVelocity and abs(Vr) > self.maxVelocity):
+            if (abs(Vl) == abs(Vr)):
+                Vr = self.maxVelocity * sign(Vr)
+                Vl = self.maxVelocity * sign(Vl)
+            elif (abs(Vl) > abs(Vr)):
+                ratio = Vr/Vl
+                Vl = self.maxVelocity * sign(Vl)
+                Vr = Vl * ratio
+            else:
+                ratio = Vl/Vr
+                Vr = self.maxVelocity * sign(Vr)
+                Vl = Vr * ratio
+        elif (abs(Vl) > self.maxVelocity):
+            ratio = Vr/Vl
+            Vl = self.maxVelocity * sign(Vl)
+            Vr = Vl * ratio
+        elif (abs(Vr) > self.maxVelocity):
+            ratio = Vl/Vr
+            Vr = self.maxVelocity * sign(Vr)
+            Vl = Vr * ratio
+
+        if (abs(Vl) > self.maxVelocity):
+            ratio = Vr/Vl
+            Vl = self.maxVelocity * sign(Vl)
+            Vr = Vl * ratio
+        elif (abs(Vr) > self.maxVelocity):
+            ratio = Vl/Vr
+            Vr = self.maxVelocity * sign(Vr)
+            Vl = Vr * ratio
+
+        return Vl, Vr
 
 
 def sign(num: int) -> int:
     if num == 0:
         return 0
     return 1 if num > 0 else -1
+
+
+def multiply_list(list: list, num: int):
+    return [i * num for i in list]
 
 
 def main():
@@ -270,12 +303,18 @@ def main():
     STEP = 0.001
     TIMESTEP = 0.01
 
+    SCALE = 100
+
     print('Starting...')
 
     with open('deploy/pathplanner/Test.path', 'r') as f:
         path = load(f)
 
-    waypoints = generatePathBezier(path, STEP, TIMESTEP, DBM)
+    sTime = time()
+
+    waypoints = generatePathBezier(path, STEP, TIMESTEP, DBM, SCALE)
+
+    print(f'Generated path in {round(time()-sTime, 3)}s')
 
     log_graph(waypoints, WHEEL_RAD, DBM)
 
