@@ -1,395 +1,169 @@
-from pybricks.ev3devices import Motor as _Motor
-from pybricks.ev3devices import GyroSensor as _Gyro
-from pybricks.ev3devices import ColorSensor as _ColorSensor
-from pybricks.parameters import Port, Direction, Stop, Color
-from controllers import PIDController
-from math import radians
-import _thread
-from mytools import mean
+from os import listdir
+from time import sleep
+from typing import NoReturn
+
+motor_ports = {'A': ['0', None], 'B': ['1', None], 'C': ['2', None], 'D': ['3', None]}
+sensor_ports = {'1': None, '2': None, '3': None, '4': None}
 
 
 class Motor:
+    def __init__(self, Port: str, Direction: int, bias: float = 0, maxSpeed: float = 1000):
 
-    lock = _thread.allocate_lock()
-    runFunc = True
+        self._port = Port
+        self._portProps = motor_ports[Port]
+        self.dir = Direction
 
-    def __init__(self, Port: Port, Direction: Direction, Kpid=None):
+        self.countF = open("/sys/bus/iio/devices/iio:device1/in_count"+self._portProps[0]+"_raw", 'r')
+        self.frequencyF = open("/sys/bus/iio/devices/iio:device1/in_frequency"+self._portProps[0]+"_input", 'r')
+        self.dutyCycleF = open("/sys/class/tacho-motor/motor"+self._portProps[1]+"/duty_cycle_sp", 'w')
+        self.commandF = open("/sys/class/tacho-motor/motor"+self._portProps[1]+"/command", 'w')
 
-        self.motor = _Motor(Port, Direction)
+        self.commandF.write("run-direct")
 
-        if Kpid: self.Kp, self.Ki, self.Kd = Kpid
-        else: self.Kp, self.Ki, self.Kd = 0, 0, 0
-        self.PID = PIDController(self.Kp, self.Ki, self.Kd, 0)
+        self.bias = bias
 
-    def PIDRunAngle(self, target: int, speed: int, range=(0, 0),
-                    Kpid=None, wait=True):
-        """
-        This function turns the motor the given angle using a PID controller.
+        self.maxSpeed = maxSpeed
 
-        Parameters: Target-degrees Speed-deg/s
-        Range-(-range, +range) Kpid-(number, number, number), wait-True/False
+    def run(self, speed: float = 0) -> NoReturn:
+        self.dutyCycle(speed / self.maxSpeed * 100)
 
-        """
+    def stop(self) -> NoReturn:
+        self.dutyCycle(0)
 
-        def run():
+    def getAngle(self) -> float:
+        return self.count() / 2 + self.bias
 
-            if Kpid: Kp, Ki, Kd = Kpid
-            else: Kp, Ki, Kd = self.Kp, self.Ki, self.Kd
+    def getRot(self) -> float:
+        return self.getAngle() / 360
 
-            PID = PIDController(Kp, Ki, Kd, target)
+    def getSpeed(self) -> float:
+        return self.frequency() / 2
 
-            angle = self.getAngle()
+    def reset(self, angle: float = 0) -> NoReturn:
+        self.bias = self.count() / 2 + angle
 
-            while True:
-                while (angle < target-range[0] and angle > target+range[1]):
+    def count(self) -> int:
+        self.countF.seek(0)
+        return int(self.countF.read()) * self.dir
 
-                    angle = self.getRawAngle()
+    def frequency(self) -> int:
+        self.frequencyF.seek(0)
+        return int(self.frequencyF.read()) * self.dir
 
-                    correction = PID.correction(angle)
-
-                    if (abs(correction) > speed):
-                        correction = 0
-
-                    if (target > angle):
-                        self.run(speed+correction)
-                    else:
-                        self.run(-speed+correction)
-
-                self.stop()
-
-                angle = self.getAngle()
-                if (angle >= target-range[0] and angle <= target+range[1]):
-                    self.stop()
-                    break
-
-        if wait:
-            run()
-        else:
-            _thread.start_new_thread(run, ())
-
-    def PIDRunTarget(self, target: int, speed: int, range=(0, 0),
-                     Kpid=None, wait=True):
-        """
-        This function turns the motor to the given
-        target using a PID controller.
-
-        Parameters: Target-degrees Speed-deg/s
-        Range-(-range, +range) Kpid-(number, number, number)
-
-        """
-
-        target = target-self.getAngle()
-
-        self.PIDRunAngle(speed, target, range, Kpid, wait)
-
-    def run(self, speed: int):
-        """
-        This function runs the motor at the given speed.
-
-        Parameters: Speed-deg/s
-
-        """
-
-        self.motor.run(speed)
-
-    def setPID(self, target: int = 0, Kpid: tuple = None):
-        """
-        This function sets the PID controller.
-
-        Parameters: Target-degrees Kpid-(number, number, number)
-
-        """
-
-        if (Kpid is None): Kp, Ki, Kd = self.Kp, self.Ki, self.Kd
-        else: Kp, Ki, Kd = Kpid
-
-        self.PID = PIDController(Kp, Ki, Kd, target, self.getSpeed())
-
-    def PIDRun(self, target):
-        """
-        This function runs the motor at the given speed with a PID controller
-
-        Parameters: Target-degrees/s
-
-        """
-
-        self.PID.target = target
-        self.run(self.PID.correction(self.getSpeed()) + target)
-
-    def runAngle(self, target: int, speed: int, stop: Stop, wait=True):
-        """
-        This function turns the motor to the given angle.
-
-        Parameters: Target-degrees Speed-deg/s
-        Stop-StopType Wait-Y/N
-
-        """
-
-        self.motor.run_angle(speed, target, stop, wait)
-
-    def runTarget(self, target: int, speed: int, stop: Stop, wait=True):
-        """
-        This function turns the motor the given angle.
-
-        Parameters: Target-degrees Speed-deg/s
-        Stop-StopType Wait-Y/N
-
-        """
-
-        self.motor.run_target(speed, target, stop, wait)
-
-    def dc(self, duty):
-        """
-        This function runs the motor at the given duty cycle.
-
-        Parameters: Duty-cycle(-100-100)
-
-        """
-
-        self.motor.dc(duty)
-
-    def stop(self):
-        """
-        This function stops the motor and lets it spin freely.
-        """
-
-        self.runFunc = False
-        with self.lock:
-            self.motor.stop()
-
-    def brake(self):
-        """
-        This function passively brakes the motor.
-        """
-
-        self.runFunc = False
-        with self.lock:
-            self.motor.brake()
-
-    def hold(self):
-        """
-        This function stops the motor and actively holds it
-        at its current angle.
-        """
-
-        self.runFunc = False
-        with self.lock:
-            self.motor.hold()
-
-    def trueStop(self):
-        """
-        This function stops then brakes it - the motor and actively holds
-        itself at its current angle.
-        """
-
-        self.stop()
-        self.hold()
-
-    def resetAngle(self, angle: int = 0):
-        """
-        This function resets the motor's angle to the given angle.
-
-        Parameters: Angle-degrees
-
-        """
-
-        self.motor.reset_angle(angle)
-
-    def getAngle(self) -> int:
-        """
-        This function returns the motor's angle.
-
-        Returns: Angle-degrees(0-360)
-
-        """
-
-        return self.motor.angle() % 360
-
-    def getRawAngle(self) -> int:
-        """
-        This function returns the motor's angle.
-
-        Returns: Angle-degrees(-inf-inf)
-
-        """
-
-        return self.motor.angle()
-
-    def getRot(self) -> int:
-        """
-        This function returns the motor's rotation.
-
-        Returns: Rotation-revolutions(-inf-inf)
-
-        """
-
-        return self.getRawAngle() / 360
-
-    def getSpeed(self) -> int:
-        """
-        This function returns the motor's speed.
-
-        Returns: Speed-deg/s
-
-        """
-
-        return self.motor.speed()
+    def dutyCycle(self, dutyCycle: int) -> NoReturn:
+        self.dutyCycleF.seek(0)
+        self.dutyCycleF.write(str(dutyCycle))
 
 
 class Gyro:
-    def __init__(self, Port: Port, Direction: Direction):
-        self.gyro = _Gyro(Port, Direction)
+    def __init__(self, Port: str, Direction: int, bias: float = 0):
 
-    def resetAngle(self, angle: int):
-        """
-        This function resets the gyro's angle to the given angle.
-        """
+        self._port = Port
+        self._portF = sensor_ports[Port]
 
-        self.gyro.reset_angle(angle)
+        self.dir = Direction
 
-    def getRawAngle(self) -> int:
-        """
-        This function returns the gyro's angle.
+        self.valueF = open("/sys/class/lego-sensor/sensor"+self._portF+"/value0", 'r')
+        self.modeF = open("/sys/class/lego-sensor/sensor"+self._portF+"/mode", 'w')
 
-        Returns: Angle-degrees(-inf-inf)
+        self.modeF.write("GYRO-ANG")
 
-        """
+        self.bias = self.getAngle() + bias
 
-        return self.gyro.angle()
+    def getAngle(self) -> float:
+        return self.read() * self.dir + self.bias
 
-    def getAngle(self) -> int:
-        """
-        This function returns the gyro's angle.
+    def getRate(self) -> float:
+        self.setMode("GYRO-RATE")
+        val = self.read() * self.dir
+        self.setMode("GYRO-ANG")
+        return val
 
-        Returns: Angle-degrees(0-360)
+    def reset(self, angle: int = 0) -> NoReturn:
+        self.bias = self.read() + angle
 
-        """
+    def calibrate(self, angle: int = 0) -> NoReturn:
+        self.setMode("GYRO-CAL")
+        self.setMode("GYRO-ANG")
+        sleep(0.1)
+        self.reset(angle)
 
-        return self.getRawAngle() % 360
+    def read(self) -> int:
+        self.valueF.seek(0)
+        return int(self.valueF.read())
 
-    def getRawRadians(self) -> float:
-        """
-        This function returns the gyro's angle.
-
-        Returns: Angle-radians(-inf-inf)
-
-        """
-
-        return radians(self.getRawAngle())
-
-    def getRadians(self) -> float:
-        """
-        This function returns the gyro's angle.
-
-        Returns: Angle-radians(0-2pi)
-
-        """
-
-        return radians(self.getAngle())
-
-    def getSpeed(self) -> int:
-        """
-        This function returns the gyro's speed.
-
-        Returns: Speed-deg/s
-
-        """
-
-        return self.gyro.speed()
-
-    def checkOscillation(self, time) -> bool:
-        """
-        This function checks if the gyro is oscillating.
-
-        Parameters: Time-seconds
-
-        Returns: True/False
-
-        """
-
-        startTime = time()
-        pastAngle = self.getRawAngle()
-        while (time()-startTime < time):
-            angle = self.getRawAngle()
-            if (pastAngle != angle):
-                return True
-            pastAngle = angle
-        else:
-            return False
+    def setMode(self, mode: str = "GYRO-ANG") -> NoReturn:
+        self.modeF.seek(0)
+        self.modeF.write(mode)
 
 
 class DualGyro(Gyro):
-    def __init__(self, Port1: Port, Direction1: Direction,
-                 Port2: Port, Direction2: Direction):
-        self.gyro1 = _Gyro(Port1, Direction1)
-        self.gyro2 = _Gyro(Port2, Direction2)
+    def __init__(self, Port1: str, Direction1: int, Port2: str, Direction2: int, bias: float = 0):
+        self.gyro1 = Gyro(Port1, Direction1, bias)
+        self.gyro2 = Gyro(Port2, Direction2, bias)
 
-    def resetAngle(self, angle):
-        """
-        This function resets the gyro's angle to the given angle.
-        """
+    def getAngle(self) -> float:
+        return (self.gyro1.getAngle() + self.gyro2.getAngle()) / 2
 
-        self.gyro1.reset_angle(angle)
-        self.gyro2.reset_angle(angle)
+    def getRate(self) -> float:
+        return (self.gyro1.getRate() + self.gyro2.getRate()) / 2
 
-    def getRawAngle(self):
-        """
-        This function returns the gyro's angle.
+    def reset(self, angle: int = 0) -> NoReturn:
+        self.gyro1.reset(angle)
+        self.gyro2.reset(angle)
 
-        Returns: Angle-degrees(-inf-inf)
-
-        """
-
-        return mean(self.gyro1.angle(), self.gyro2.angle())
-
-    def getSpeed(self):
-        """
-        This function returns the gyro's speed.
-
-        Returns: Speed-deg/s
-
-        """
-
-        return mean(self.gyro1.speed(), self.gyro2.speed())
+    def calibrate(self, angle: int = 0) -> NoReturn:
+        self.gyro1.calibrate(angle)
+        self.gyro2.calibrate(angle)
 
 
 class LightSensor:
-    def __init__(self, Port: Port, MAX: float, MIN: float):
-        self.sensor = _ColorSensor(Port)
-        self.MAX = MAX
-        self.MIN = MIN
+    def __init__(self, Port: str):
 
-    def reflection(self) -> float:
-        """
-        This function returns the reflection measerment.
+        self._port = Port
+        self._portF = sensor_ports[Port]
 
-        Returns: Reflection-percent
-        """
+        self.valueF = open("/sys/class/lego-sensor/sensor"+self._portF+"/value0", 'r')
+        self.modeF = open("/sys/class/lego-sensor/sensor"+self._portF+"/mode", 'w')
 
-        return self.sensor.reflection()
+        self.modeF.write("COL-REFLECT")
 
-    def ambient(self) -> float:
-        """
-        This function returns the ambient mesearment.
+    def getReflect(self) -> int:
+        return self.read()
 
-        Returns: Ambient-percent
-        """
-        return self.sensor.ambient()
+    def getColor(self) -> int:
+        self.setMode('COL-COLOR')
+        val = self.read()
+        self.setMode("COL-REFLECT")
+        return val
 
-    def color(self) -> Color:
-        """
-        This function return the color measerment.
+    def read(self) -> int:
+        self.valueF.seek(0)
+        return int(self.valueF.read())
 
-        Returns: Color-Color
-        """
+    def setMode(self, mode: str = "COL-REFLECT") -> NoReturn:
+        self.modeF.seek(0)
+        self.modeF.write(mode)
 
-        return self.sensor.color()
 
-    def RGB(self) -> tuple:
-        """
-        This function return the color measerment in RGB values.
+def MotorPorts() -> NoReturn:
+    for dir in listdir("/sys/class/tacho-motor"):
+        with open("/sys/class/tacho-motor/"+dir+"/address", 'r') as f:
+            addr = f.read()
+        motor_ports[addr[13]][1] = dir[5]
 
-        Returns: RGB-(Percent, Percent, Percent)
-        """
 
-        return self.sensor.rgb()
+def SensorPorts() -> NoReturn:
+    for dir in listdir("/sys/class/lego-sensor"):
+        with open("/sys/class/lego-sensor/"+dir+"/address", 'r') as f:
+            addr = f.read()
+        sensor_ports[addr[12]] = dir[6]
+
+
+def startup() -> NoReturn:
+    MotorPorts()
+    SensorPorts()
+
+
+if __name__ != "__main__":
+    startup()
