@@ -1,42 +1,20 @@
-#!/usr/bin/env pybricks-micropython
+#!/home/robot/Robot/micropython
 
-from pybricks.hubs import EV3Brick
-from pybricks.parameters import Port, Direction
-from drivebase import DriveBase
-from Comms.client import Client
-from Comms.message import Message
-from time import sleep
-
+from paths import path
+from runner import Runner
+from robots import robot
 
 print("Starting...")
 
-ev3 = EV3Brick()
-drivebase = DriveBase((Port.D, Direction.CLOCKWISE),
-                      (Port.B, Direction.CLOCKWISE),
-                      (Port.S3, Direction.COUNTERCLOCKWISE,
-                      Port.S4, Direction.COUNTERCLOCKWISE),
-                      8.16, 9.5, 0, 0, 0)
+runner = Runner(("MD", {}),
+                ("MB", {}),
+                ("S3", "S4", True, {}),
+                robot.wheelRad, robot.DBM)
 
-with open('Comms/ipAdd', 'r') as f:
-    ip = f.read()
 
-print("Connecting to server... IP: ", ip)
-client = Client(ip, 5000)
-print("Connected to server! IP: ", ip)
+log, count = runner.path(path, 0.01, 0.5, 0, True)
 
-with open('Test.waypoints', 'r') as f:
-    waypoints = eval(f.read())
+with open('runtime.log', 'w') as f:
+    f.write(str(log))
 
-with open('runtime.log', 'w'): pass
-with open('runtime.log', 'a') as logfile:
-    logfile.write('(')
-    drivebase.trackPath(waypoints, 0.06, 0.1, False, logfile, client)
-    logfile.write(')')
-
-with drivebase.lock:
-    client.send(Message('show', str((drivebase.wheelDiameter, drivebase.DBM))))
-
-sleep(1)
-with drivebase.lock:
-    client.quit()
 print("Done!")
