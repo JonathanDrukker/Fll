@@ -127,11 +127,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-.pathplanner/settings.json
-*.waypoints
-*.data
-*.json
 Robot/Comms/ipAdd
 Tools/Comms/ipAdd
-setupServer.bat
 Tools/Comms/IP/ipAdd
+setupServer.bat
