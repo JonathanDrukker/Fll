@@ -1,20 +1,26 @@
+import micropython
+from typing import List, NoReturn
 from time import time
-from math import sin, cos, sqrt, pi
+from math import pi, sin, cos, sqrt
 
 
 class PIDController:
     def __init__(self, Kp: float, Ki: float, Kd: float, target: float, feedback: float = 0):
 
-        self.Kp, self.Ki, self.Kd = Kp, Ki, Kd
+        self.Kp = micropython.const(Kp)
+        self.Ki = micropython.const(Ki)
+        self.Kd = micropython.const(Kd)
+
         self.target = target
 
         self.startTime = time()
-        self.lastTime = 0
+        self.lastTime = 0.0
 
         self.lastError = target-feedback
 
-        self.integral = 0
+        self.integral = 0.0
 
+    @micropython.native
     def correction(self, feedback: float, error: float = None) -> float:
 
         if (error is None):
@@ -31,6 +37,7 @@ class PIDController:
 
         return correction
 
+    @micropython.native
     def calc_correction(self, error: float, dt: float) -> float:
 
         p = error
@@ -41,24 +48,25 @@ class PIDController:
 
 
 class RAMSETEController:
-    def __init__(self, b, zeta, halfDBM):
+    def __init__(self, b: float, zeta: float, halfDBM: float):
 
         self.b = b
         self.zeta = zeta
 
-        self.halfDBM = halfDBM
+        self.halfDBM = micropython.const(halfDBM)
 
-    def correction(self, Vx, Vy, theata, V, Omega, theata_d):
+    @micropython.native
+    def correction(self, Vx: float, Vy: float, theata: float, V: float, Omega: float, theata_d: float) -> List[float, float]:
 
-        cosTheata = cos(theata); sinTheata = sin(theata)
+        cosTheata, sinTheata = cos(theata), sin(theata)
 
         Ex = cosTheata*Vx + sinTheata*Vy
-        Ey = -sinTheata*Vx + cosTheata*Vy
+        Ey = cosTheata*Vy - sinTheata*Vx
 
         Etheata = theata_d - theata
         if (Etheata > pi): Etheata -= 2*pi
         elif (Etheata < -pi): Etheata += 2*pi
-        if (Etheata == 0): Etheata = 0.00001
+        elif (Etheata == 0): Etheata = 0.00001
 
         k = 2*self.zeta*sqrt(Omega**2 + self.b*V**2)
 
@@ -66,3 +74,8 @@ class RAMSETEController:
         omega = (Omega + k*Etheata + (self.b*V*sin(Etheata)*Ey)/Etheata) * self.halfDBM
 
         return v - omega, v + omega
+
+    @micropython.native
+    def setGains(self, b: float, zeta: float) -> NoReturn:
+        self.b = b
+        self.zeta = zeta
