@@ -4,6 +4,7 @@ from Robot.drivebase import DriveBase
 from Robot.controllers import RAMSETEController
 from math import pi, sin, cos, degrees
 from random import choice
+from Robot.robots import main_robot as robot_charecteristics
 
 
 class Robot(DriveBase):
@@ -43,8 +44,10 @@ class Robot(DriveBase):
                     'Vtarget': (Vl/self.wheelCircumference*360, Vr/self.wheelCircumference*360)},
                     'waypoint': waypoint}
 
-            if _print: print(data)
-            if _logVar is not None: _logVar.append(data)
+            if _print:
+                print(data)
+            if _logVar is not None:
+                _logVar.append(data)
 
     def drive(self, Vl, Vr, t):
 
@@ -79,7 +82,7 @@ class Robot(DriveBase):
 def main():
     print("Starting...")
 
-    robot = Robot(0, 0, 0, 8.16, 9.5, 0.602, 0.512)
+    robot = Robot(0, 0, 0, robot_charecteristics.wheelRad, robot_charecteristics.DBM, 0.602, 0.512)
 
     with open('Robot/Test.waypoints', 'r') as file:
         path = eval(file.read())
