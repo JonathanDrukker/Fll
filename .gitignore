@@ -134,3 +134,4 @@ setupServer.bat
 .pathplanner/settings.json
 *.data
 *.wpilib.json
+todo.txt
