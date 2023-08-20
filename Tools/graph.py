@@ -35,9 +35,9 @@ def graph(data: dict):
     plt.show()
 
 
-def log_graph(log, wheelDiameter, DBM):
+def log_graph(log, wheelRadius, DBM):
 
-    wheelCircumference = wheelDiameter * pi
+    wheelCircumference = 2*wheelRadius * pi
     halfDBM = DBM/2
 
     formatted_log = {}
@@ -83,63 +83,104 @@ def log_graph(log, wheelDiameter, DBM):
     omega_plot.set_title("Omega")
     theata_plot = plt.subplot2grid((4, 3), (0, 2), 1, 1)
     theata_plot.set_title("Theata")
-    Acc_plot = plt.subplot2grid((4, 3), (1, 2), 1, 1)
-    Acc_plot.set_title("Accelaration")
+    leftAcc_plot = plt.subplot2grid((8, 3), (2, 2), 1, 1)
+    leftAcc_plot.set_title("Acc left", fontsize=8, y=0.9)
+    leftAcc_plot.tick_params(bottom=False, labelbottom=False)
+    rightAcc_plot = plt.subplot2grid((8, 3), (3, 2), 1, 1)
+    rightAcc_plot.set_title("Acc right", fontsize=8, y=0.9)
     Vl_plot = plt.subplot2grid((4, 3), (2, 2), 1, 1)
     Vl_plot.set_title("Vl")
     Vr_plot = plt.subplot2grid((4, 3), (3, 2), 1, 1)
     Vr_plot.set_title("Vr")
 
-    points = np.array([formatted_log['robot']['Pose'][0], formatted_log['robot']['Pose'][1]]).T.reshape(-1, 1, 2)
-    segments = np.concatenate([points[:-1], points[1:]], axis=1)
-    lc = LineCollection(segments, cmap=plt.get_cmap('hsv'))
-    lc.set_array(np.linspace(0, len(formatted_log['robot']['Pose'][0]), len(formatted_log['robot']['Pose'][0])))
-    pose_plot.add_collection(lc)
-    points = np.array([formatted_log['waypoint']['x'], formatted_log['waypoint']['y']]).T.reshape(-1, 1, 2)
-    segments = np.concatenate([points[:-1], points[1:]], axis=1)
-    lc = LineCollection(segments, cmap=plt.get_cmap('hsv'))
-    lc.set_array(np.linspace(0, len(formatted_log['waypoint']['x']), len(formatted_log['waypoint']['x'])))
-    pose_plot.add_collection(lc)
+    if 'robot' in formatted_log and 'Pose' in formatted_log['robot']:
+        points = np.array([formatted_log['robot']['Pose'][0], formatted_log['robot']['Pose'][1]]).T.reshape(-1, 1, 2)
+        segments = np.concatenate([points[:-1], points[1:]], axis=1)
+        lc = LineCollection(segments, cmap=plt.get_cmap('hsv'))
+        lc.set_array(np.linspace(0, len(formatted_log['robot']['Pose'][0]), len(formatted_log['robot']['Pose'][0])))
+        pose_plot.add_collection(lc)
+    if 'waypoint' in formatted_log and 'x' in formatted_log['waypoint']:
+        points = np.array([formatted_log['waypoint']['x'], formatted_log['waypoint']['y']]).T.reshape(-1, 1, 2)
+        segments = np.concatenate([points[:-1], points[1:]], axis=1)
+        lc = LineCollection(segments, cmap=plt.get_cmap('hsv'))
+        lc.set_array(np.linspace(0, len(formatted_log['waypoint']['x']), len(formatted_log['waypoint']['x'])))
+        pose_plot.add_collection(lc)
     pose_plot.autoscale_view()
 
-    velocity_plot.plot(formatted_log['time'], [(Vl + Vr)/720*wheelCircumference for Vl,
-                                               Vr in zip(formatted_log['robot']['V'][0], formatted_log['robot']['V'][1])])
-    velocity_plot.plot(formatted_log['time'], formatted_log['waypoint']['V'])
+    if 'robot' in formatted_log and 'V' in formatted_log['robot']:
+        velocity_plot.plot(formatted_log['time'], [(Vl + Vr)/720*wheelCircumference for Vl,
+                                                   Vr in zip(formatted_log['robot']['V'][0],
+                                                             formatted_log['robot']['V'][1])])
+    if 'waypoint' in formatted_log and 'V' in formatted_log['waypoint']:
+        velocity_plot.plot(formatted_log['time'], formatted_log['waypoint']['V'])
 
-    omega_plot.plot(formatted_log['time'], [degrees(wheelCircumference/DBM*(Vr/360 - Vl/360))
-                    for Vl, Vr in zip(formatted_log['robot']['V'][0], formatted_log['robot']['V'][1])])
-    omega_plot.plot(formatted_log['time'], [degrees(i) for i in formatted_log['waypoint']['omega']])
+    if 'robot' in formatted_log and 'V' in formatted_log['robot']:
+        omega_plot.plot(formatted_log['time'], [degrees(wheelCircumference/DBM*(Vr/360 - Vl/360))
+                        for Vl, Vr in zip(formatted_log['robot']['V'][0], formatted_log['robot']['V'][1])])
+    if 'waypoint' in formatted_log and 'omega' in formatted_log['waypoint']:
+        omega_plot.plot(formatted_log['time'], [degrees(i) for i in formatted_log['waypoint']['omega']])
 
-    theata_plot.plot(formatted_log['time'], [degrees(i) for i in formatted_log['robot']['Pose'][2]])
-    theata_plot.plot(formatted_log['time'], [degrees(i) for i in formatted_log['waypoint']['theata']])
+    if 'robot' in formatted_log and 'Pose' in formatted_log['robot']:
+        theata_plot.plot(formatted_log['time'], [degrees(i) for i in formatted_log['robot']['Pose'][2]])
+    if 'waypoint' in formatted_log and 'theata' in formatted_log['waypoint']:
+        theata_plot.plot(formatted_log['time'], [degrees(i) for i in formatted_log['waypoint']['theata']])
 
-    Acc = [0]
-    pastVel = 0
-    pastTime = formatted_log['time'][0]
-    for index, time in enumerate(formatted_log['time'][1:]):
-        Vel = (formatted_log['robot']['V'][0][index]+formatted_log['robot']['V'][1][index])/720 * wheelCircumference
-        delta_t = time - pastTime
-        if delta_t == 0: Acc.append(0)
-        else: Acc.append((Vel-pastVel)/delta_t)
-        pastVel = Vel
-        pastTime = time
+    if 'robot' in formatted_log and 'V' in formatted_log['robot']:
+        leftAcc = [0]
+        pastVel = 0
+        pastTime = formatted_log['time'][0]
+        for index, time in enumerate(formatted_log['time'][1:]):
+            Vel = formatted_log['robot']['V'][0][index] / 360 * wheelCircumference
+            delta_t = time - pastTime
+            if delta_t == 0:
+                leftAcc.append(0)
+            else:
+                leftAcc.append((Vel-pastVel)/delta_t)
+            pastVel = Vel
+            pastTime = time
 
-    Acc_plot.plot(formatted_log['time'], Acc)
-    Acc_plot.plot(formatted_log['time'], formatted_log['waypoint']['acceleration'])
+        leftAcc_plot.plot(formatted_log['time'], leftAcc)
+    if 'waypoint' in formatted_log and 'leftAcc' in formatted_log['waypoint']:
+        leftAcc_plot.plot(formatted_log['time'], formatted_log['waypoint']['leftAcc'])
 
-    Vl_plot.plot(formatted_log['time'], [
-                 i/360*wheelCircumference for i in formatted_log['robot']['Vtarget'][0]], color='green')
-    Vl_plot.plot(formatted_log['time'], [i/360*wheelCircumference for i in formatted_log['robot']['V'][0]])
-    Vl_plot.plot(formatted_log['time'], [V - omega*halfDBM for V,
-                 omega in zip(formatted_log['waypoint']['V'], formatted_log['waypoint']['omega'])])
+    if 'robot' in formatted_log and 'V' in formatted_log['robot']:
+        rightAcc = [0]
+        pastVel = 0
+        pastTime = formatted_log['time'][0]
+        for index, time in enumerate(formatted_log['time'][1:]):
+            Vel = formatted_log['robot']['V'][0][index] / 360 * wheelCircumference
+            delta_t = time - pastTime
+            if delta_t == 0:
+                rightAcc.append(0)
+            else:
+                rightAcc.append((Vel-pastVel)/delta_t)
+            pastVel = Vel
+            pastTime = time
 
-    Vr_plot.plot(formatted_log['time'], [
-                 i/360*wheelCircumference for i in formatted_log['robot']['Vtarget'][1]], color='green')
-    Vr_plot.plot(formatted_log['time'], [i/360*wheelCircumference for i in formatted_log['robot']['V'][1]])
-    Vr_plot.plot(formatted_log['time'], [V + omega*halfDBM for V,
-                 omega in zip(formatted_log['waypoint']['V'], formatted_log['waypoint']['omega'])])
+        rightAcc_plot.plot(formatted_log['time'], leftAcc)
+    if 'waypoint' in formatted_log and 'rightAcc' in formatted_log['waypoint']:
+        rightAcc_plot.plot(formatted_log['time'], formatted_log['waypoint']['rightAcc'])
 
-    plt.subplots_adjust(left=0.04, bottom=0.04, right=0.985, top=0.96, hspace=0.375)
+    if 'robot' in formatted_log and 'Vtarget' in formatted_log['robot']:
+        Vl_plot.plot(formatted_log['time'], [
+            i/360*wheelCircumference for i in formatted_log['robot']['Vtarget'][0]], color='green')
+    if 'robot' in formatted_log and 'V' in formatted_log['robot']:
+        Vl_plot.plot(formatted_log['time'], [i/360*wheelCircumference for i in formatted_log['robot']['V'][0]])
+    if 'waypoint' in formatted_log and 'V' in formatted_log['waypoint'] and 'omega' in formatted_log['waypoint']:
+        Vl_plot.plot(formatted_log['time'], [V - omega*halfDBM for V,
+                     omega in zip(formatted_log['waypoint']['V'], formatted_log['waypoint']['omega'])])
+
+    if 'robot' in formatted_log and 'Vtarget' in formatted_log['robot']:
+        Vr_plot.plot(formatted_log['time'], [
+            i/360*wheelCircumference for i in formatted_log['robot']['Vtarget'][1]], color='green')
+    if 'robot' in formatted_log and 'V' in formatted_log['robot']:
+        Vr_plot.plot(formatted_log['time'], [i/360*wheelCircumference for i in formatted_log['robot']['V'][1]])
+    if 'waypoint' in formatted_log and 'V' in formatted_log['waypoint'] and 'omega' in formatted_log['waypoint']:
+        Vr_plot.plot(formatted_log['time'], [V + omega*halfDBM for V,
+                                             omega in zip(formatted_log['waypoint']['V'],
+                                                          formatted_log['waypoint']['omega'])])
+
+    plt.subplots_adjust(left=0.03, bottom=0.04, right=0.985, top=0.96, wspace=0.125, hspace=0.5)
     plt.show()
 
 
