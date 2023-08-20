@@ -1,0 +1,13 @@
+{
+    "version": "2.0.0",
+    "tasks": [{
+        "label": "Build Path",
+        "command": "python 'G:/My Drive/GitHub/Fll/buildPath.py'",
+        "type": "shell"
+    },
+    {
+        "label": "Path Download Toggle",
+        "command": "python .vscode/PathDownloadToggle.py",
+        "type": "shell"
+    }]
+}

@@ -1,0 +1,32 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Download and Run",
+            "type": "ev3devBrowser",
+            "request": "launch",
+            "program": "/home/robot/${workspaceFolderBasename}/${relativeFile}",
+            "interactiveTerminal": true
+        },
+        {
+            "preLaunchTask": "Path Download Toggle",
+            "postDebugTask": "Path Download Toggle",
+            "name": "Download without path and Run",
+            "type": "ev3devBrowser",
+            "request": "launch",
+            "program": "/home/robot/${workspaceFolderBasename}/${relativeFile}",
+            "interactiveTerminal": true
+        },
+        {
+            "preLaunchTask": "Build Path",
+            "name": "Build, Download and Run path",
+            "type": "ev3devBrowser",
+            "request": "launch",
+            "program": "/home/robot/${workspaceFolderBasename}/${relativeFile}",
+            "interactiveTerminal": true
+        }
+    ]
+}
