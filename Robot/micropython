@@ -1,2 +1,3 @@
 #!/bin/sh
-exec micropython heapsize=16M "$@"
+password="maker"
+echo "$password" | sudo -S nice -n -20 pybricks-micropython "$@"
