@@ -4,7 +4,7 @@ from matplotlib.collections import LineCollection
 from math import degrees, pi
 
 
-def graph(data: dict):
+def graph(data):
 
     keys = list(data.keys())
 
@@ -38,7 +38,7 @@ def graph(data: dict):
 def log_graph(log, wheelRadius, DBM):
 
     wheelCircumference = 2*wheelRadius * pi
-    halfDBM = DBM/2
+    halfDBM = DBM
 
     formatted_log = {}
     for key, value in log[0].items():
@@ -115,6 +115,7 @@ def log_graph(log, wheelRadius, DBM):
         velocity_plot.plot(formatted_log['time'], formatted_log['waypoint']['V'])
 
     if 'robot' in formatted_log and 'V' in formatted_log['robot']:
+        omega_plot.plot(formatted_log['time'], [degrees(theata) for theata in formatted_log['robot']['Pose'][2]])
         omega_plot.plot(formatted_log['time'], [degrees(wheelCircumference/DBM*(Vr/360 - Vl/360))
                         for Vl, Vr in zip(formatted_log['robot']['V'][0], formatted_log['robot']['V'][1])])
     if 'waypoint' in formatted_log and 'omega' in formatted_log['waypoint']:
