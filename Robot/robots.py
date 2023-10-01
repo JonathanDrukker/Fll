@@ -11,7 +11,6 @@ class RobotCharacteristics:
         self.width = width
         self.length = length
         self.wheelAxis = wheelAxis
-        self.WA = wheelAxis
         self.WA_to_middle = self.length/2 - self.WA
 
 
@@ -19,4 +18,5 @@ class Bruria(RobotCharacteristics):
     def __init__(self):
         super().__init__(9.7, 4.075, 13.5, 16.5, 5.8)
 
-robot = Bruria() # noqa
+
+robot = Bruria()
