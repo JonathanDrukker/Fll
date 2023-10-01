@@ -11,7 +11,7 @@ class RobotCharacteristics:
         self.width = width
         self.length = length
         self.wheelAxis = wheelAxis
-        self.WA_to_middle = self.length/2 - self.WA
+        self.WA_to_middle = self.length/2 - self.wheelAxis
 
 
 class Bruria(RobotCharacteristics):
