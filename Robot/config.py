@@ -8,7 +8,10 @@ class JSONToClass:
             else: setattr(self, key, value)
 
 
-class Robot(JSONToClass):
+class config(JSONToClass):
     def __init__(self, filename: str = 'parameters.json'):
         with open(filename, 'r') as f:
             super().__init__(json.load(f))
+
+    def __repr__(self):
+        return str(self.__dict__)
