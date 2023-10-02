@@ -1,0 +1,50 @@
+{
+    "robot": {
+        "width": 13.5,
+        "length": 16.5
+    },
+    "wheel": {
+        "radius": 4.075,
+        "diameter": 8.15,
+        "circumference": 25.603980126756814,
+        "width": 1.5
+    },
+    "drivebase": {
+        "DBM": 9.7,
+        "halfDBM": 4.85,
+        "motor": {
+            "left": {
+                "Port": "D",
+                "Direction": 1,
+                "bias": 0,
+                "maxSpeed": 913.0,
+                "ff": [
+                    9,
+                    0.11358,
+                    2.8132e-05
+                ]
+            },
+            "right": {
+                "Port": "B",
+                "Direction": 1,
+                "bias": 0,
+                "maxSpeed": 945.0,
+                "ff": [
+                    5,
+                    0.11081,
+                    -9.2917e-06
+                ]
+            }
+        }
+    },
+    "gyro": {
+        "Port": [
+            "A",
+            "B"
+        ],
+        "Direction": [
+            1,
+            1
+        ]
+    }
+}
