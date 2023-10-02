@@ -131,7 +131,6 @@ Robot/Comms/ipAdd
 Tools/Comms/ipAdd
 Tools/Comms/IP/ipAdd
 setupServer.bat
-.pathplanner/settings.json
 *.data
 *.wpilib.json
 todo.txt
