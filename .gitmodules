@@ -1,3 +1,6 @@
 [submodule "EV3-Comms"]
 	path = EV3-Comms
 	url = https://github.com/JonathanDrukker/EV3-Comms
+[submodule "EV3-Graphs"]
+	path = EV3-Graphs
+	url = https://github.com/JonathanDrukker/EV3-Graphs
