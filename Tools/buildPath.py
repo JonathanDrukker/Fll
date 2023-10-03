@@ -95,7 +95,7 @@ while (index < len(waypoints)):
     index += 1
 
 with open(path_to_Wfile, 'w') as f:
-    f.write(f'path_ = {path_name}'+str(tuple(split_waypoints))+f'\nmarkers_{path_name} = '+str(markers))
+    f.write(f"path_{path_name} = {str(split_waypoints)}\nmarkers_{path_name} = {str(markers)}")
 
 if graph:
     graph = []
