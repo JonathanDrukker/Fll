@@ -4,3 +4,6 @@
 [submodule "EV3-Graphs"]
 	path = EV3-Graphs
 	url = https://github.com/JonathanDrukker/EV3-Graphs
+[submodule "EV3-RobotSim"]
+	path = EV3-RobotSim
+	url = https://github.com/JonathanDrukker/EV3-RobotSim
