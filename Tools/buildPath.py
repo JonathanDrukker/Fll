@@ -1,113 +1,136 @@
+from math import sin, cos, pi
 from json import loads
-from Tools.graph import log_graph
-from Robot.robots import robot
-from math import pi
 import os
+mainpath = os.path.dirname(os.getcwd())
 
-path = os.path.dirname(os.path.abspath(__file__))
 
-path_name = input("Enter file name without the file extension: ")
+# filename = input("Enter file name without the file extension: ")
+filename = "2"
 
-path_to_JSON = path + f'\deploy\pathplanner\generatedJSON\{path_name}.wpilib.json'
-path_to_Rfile = path + f'\deploy\pathplanner\{path_name}.path'
-path_to_Wfile = path + '\Robot\paths.py'
+path_to_JSON = mainpath + f'\FLL\deploy\pathplanner\generatedJSON\{filename}.wpilib.json'
+path_to_Rfile = mainpath + f'\FLL\deploy\pathplanner\{filename}.path'
+path_to_Wfile = mainpath + '\FLL\Robot\paths.py'
 
-scale = 100
 resolution = 0.001
+unitsScale = 100
 
-# l = robot.WA_to_middle
-halfDBM = robot.halfDBM
+with open("Robot/config.json", "r") as f:
+    config = loads(f.read())
 
-graph = True
-wheelRad = robot.wheelRad
-
+with open(path_to_Rfile, 'r') as f:
+    points = loads(f.read())
 with open(path_to_JSON, 'r') as f:
-    path = loads(f.read())
+    waypoints = loads(f.read())
 
-waypoints = []
+path = []
+segment = {"Time": [], 'x': [], 'y': [], "theata": [], "V": [], "omega": [], "accL": [], "accR": []}
+
+checkStopPoint = False
+
+Vl, Vr = 0, 0
 
 # Waypoints
-for dict in path:
 
-    x, y = dict['pose']['translation']['x']*scale, dict['pose']['translation']['y']*scale
-    theata = dict['pose']['rotation']['radians']
+for index, waypoint in enumerate(waypoints):
+
+    if checkStopPoint and waypoint['velocity'] == 0 and len(segment['Time']) > 0:
+        path.append(segment)
+        segment = {"Time": [], 'x': [], 'y': [], "theata": [], "V": [], "omega": [], "accL": [], "accR": []}
+        checkStopPoint = False
+    else:
+        checkStopPoint = True
+
+    # Time
+    segment["Time"].append(waypoint["time"])
+
+    # Coords
+    x, y = waypoint['pose']['translation']['x']*unitsScale, waypoint['pose']['translation']['y']*unitsScale
+    l = config["robot"]["length"]/2 - config["robot"]["wheelAxis"]  # noqa
+    newX, newY = x + l*cos(waypoint['pose']['rotation']['radians']), y + l*sin(waypoint['pose']['rotation']['radians'])
+
+    segment['x'].append(newX)
+    segment['y'].append(newY)
+
+    # Theata
+    theata = waypoint['pose']['rotation']['radians']
     if (theata < 0):
         theata += 2*pi
+    segment['theata'].append(theata)
 
-    V = dict['velocity']*scale
-    omega = dict['angularVelocity']
+    # Velocity
+    V = waypoint['velocity']*unitsScale
+    segment['V'].append(V)
 
-    waypoint = {'time': dict['time'], 'x': x, 'y': y, 'theata': theata,
-                'V': V, 'omega': omega}
-    waypoints.append(waypoint)
+    # Omega
+    omega = waypoint['angularVelocity']
+    segment['omega'].append(omega)
 
-# Acceleration
+    # Acc
+    if index == len(waypoints)-1:
+        segment['accL'].append(0)
+        segment['accR'].append(0)
+    else:
+        nextWaypoint = waypoints[index+1]
+        dt = nextWaypoint['time'] - waypoint['time']
 
-accL, accR = path[0]['acceleration']*scale, path[0]['acceleration']*scale
-waypoints[0]['accL'], waypoints[0]['accR'] = accL, accR
+        if dt == 0:
+            if len(segment['accL']) > 0:
+                segment['accL'].append(segment['accL'][-1])
+                segment['accR'].append(segment['accR'][-1])
+            else:
+                segment['accL'].append(path[-1]['accL'][-1])
+                segment['accR'].append(path[-1]['accR'][-1])
 
-for index, dict in enumerate(waypoints[1:]):
+        else:
+            nextV = nextWaypoint['velocity']*unitsScale
+            nextOmega = nextWaypoint['angularVelocity']
+            nextVl = nextV - nextOmega*config["drivebase"]["halfDBM"]
+            nextVr = nextV + nextOmega*config["drivebase"]["halfDBM"]
 
-    V = dict['V']
-    omega = dict['omega']
-    Vl, Vr = V - omega*halfDBM, V + omega*halfDBM
+            accL = (nextVl - Vl) / dt
+            accR = (nextVr - Vr) / dt
 
-    lastV = waypoints[index]['V']
-    lastOmega = waypoints[index]['omega']
-    lastVl, lastVr = lastV - lastOmega*halfDBM, lastV + lastOmega*halfDBM
+            segment['accL'].append(accL)
+            segment['accR'].append(accR)
 
-    dt = dict['time'] - waypoints[index]['time']
-    if (dt != 0):
-        accL = (Vl - lastVl) / dt
-        accR = (Vr - lastVr) / dt
+            Vl, Vr = nextVl, nextVr
 
-    dict['accL'], dict['accR'] = accL, accR
+# Stop Events
+
+stopEvents = []
+for point in points["waypoints"]:
+    if point["isStopPoint"]:
+
+        commands = []
+        for index, i in enumerate(point["stopEvent"]["names"][::2]):
+            commands.append(f"{i}{point['stopEvent']['names'][index*2+1]}")
+        executionBehavior = point["stopEvent"]["executionBehavior"]
+
+        waitTime = point["stopEvent"]["waitTime"]
+        waitBehavior = point["stopEvent"]["waitBehavior"]
+
+        stopEvents.append({"commands": commands, "executionBehavior": executionBehavior,
+                           "waitTime": waitTime, "waitBehavior": waitBehavior})
 
 # Markers
 
-with open(path_to_Rfile, 'r') as f:
-    path_bezier = loads(f.read())
-
 markers = {}
-for marker in path_bezier['markers']:
-    index = int(marker['position'] / resolution)
-    if (index > len(waypoints)):
-        index = len(waypoints) - 1
-    events = marker['names']
-    markers[waypoints[index]['time']] = {'command': events[::2], 'parameters': events[1::2]}
+for marker in points["markers"]:
 
-# Stop Points
+    commands = []
+    for index, i in enumerate(marker["names"][::2]):
+        commands.append(f"{i}{marker['names'][index*2+1]}")
 
-for t, point in enumerate(path_bezier['waypoints']):
-    if point['isStopPoint']:
-        if point['stopEvent']['names']:
-            index = int(t / resolution)
-            events = point['stopEvent']['names']
-            markers[waypoints[index]['time']] = {'command': events[::2],
-                                                 'parameters': [eval(i) for i in events[1::2]]}
+    spline_index = int(marker['position'])
+    time = path[spline_index]["Time"][int(round(marker['position'], 3) * (1/resolution))]
 
-# Split Waypoints
+    markers[time] = commands
 
-split_waypoints = []
-waypoint_group = []
-index = 0
-while (index < len(waypoints)):
-    dict = waypoints[index]
-    waypoint_group.append(dict)
-    if (dict['V'] == 0 and len(waypoint_group) > 1):
-        split_waypoints.append(waypoint_group)
-        waypoint_group = []
-        index += 1
-    elif (index == len(waypoints) - 1):
-        split_waypoints.append(waypoint_group)
-        break
-    index += 1
+# Reversed Path
+isReversed = True if points['isReversed'] else False
 
 with open(path_to_Wfile, 'w') as f:
-    f.write(f"path_{path_name} = {str(split_waypoints)}\nmarkers_{path_name} = {str(markers)}")
-
-if graph:
-    graph = []
-    for dict in waypoints:
-        graph.append({'time': dict['time'], 'waypoint': dict})
-    log_graph(graph, robot.wheelRad, robot.DBM)
+    f.write(f"reversed_{filename} = {isReversed}\n" +
+            f"path_{filename} = {path}\n" +
+            f"stopEvents_{filename} = {stopEvents}\n" +
+            f"markers_{filename} = {markers}")
