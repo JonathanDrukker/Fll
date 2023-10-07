@@ -15,7 +15,7 @@ path_to_Wfile = path + '\Robot\paths.py'
 scale = 100
 resolution = 0.001
 
-l = robot.WA_to_middle  # noqa
+# l = robot.WA_to_middle
 halfDBM = robot.halfDBM
 
 graph = True
@@ -26,6 +26,7 @@ with open(path_to_JSON, 'r') as f:
 
 waypoints = []
 
+# Waypoints
 for dict in path:
 
     x, y = dict['pose']['translation']['x']*scale, dict['pose']['translation']['y']*scale
@@ -39,6 +40,8 @@ for dict in path:
     waypoint = {'time': dict['time'], 'x': x, 'y': y, 'theata': theata,
                 'V': V, 'omega': omega}
     waypoints.append(waypoint)
+
+# Acceleration
 
 accL, accR = path[0]['acceleration']*scale, path[0]['acceleration']*scale
 waypoints[0]['accL'], waypoints[0]['accR'] = accL, accR
@@ -60,6 +63,8 @@ for index, dict in enumerate(waypoints[1:]):
 
     dict['accL'], dict['accR'] = accL, accR
 
+# Markers
+
 with open(path_to_Rfile, 'r') as f:
     path_bezier = loads(f.read())
 
@@ -71,6 +76,8 @@ for marker in path_bezier['markers']:
     events = marker['names']
     markers[waypoints[index]['time']] = {'command': events[::2], 'parameters': events[1::2]}
 
+# Stop Points
+
 for t, point in enumerate(path_bezier['waypoints']):
     if point['isStopPoint']:
         if point['stopEvent']['names']:
@@ -78,6 +85,8 @@ for t, point in enumerate(path_bezier['waypoints']):
             events = point['stopEvent']['names']
             markers[waypoints[index]['time']] = {'command': events[::2],
                                                  'parameters': [eval(i) for i in events[1::2]]}
+
+# Split Waypoints
 
 split_waypoints = []
 waypoint_group = []
