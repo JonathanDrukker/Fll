@@ -129,7 +129,4 @@ for marker in points["markers"]:
 isReversed = True if points['isReversed'] else False
 
 with open(path_to_Wfile, 'w') as f:
-    f.write(f"reversed_{filename} = {isReversed}\n" +
-            f"path_{filename} = {path}\n" +
-            f"stopEvents_{filename} = {stopEvents}\n" +
-            f"markers_{filename} = {markers}")
+    f.write(f"""path_{filename} = {dict(path=path, stopEvents=stopEvents, markers=markers, reversed=isReversed)}""")
