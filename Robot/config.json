@@ -1,7 +1,8 @@
 {
     "robot": {
         "width": 13.5,
-        "length": 16.5
+        "length": 16.5,
+        "wheelAxis": 5.8
     },
     "wheel": {
         "radius": 4.075,
@@ -14,8 +15,8 @@
         "halfDBM": 4.85,
         "motor": {
             "left": {
-                "Port": "D",
-                "Direction": 1,
+                "port": "D",
+                "direction": 1,
                 "bias": 0,
                 "maxSpeed": 913.0,
                 "ff": [
@@ -25,8 +26,8 @@
                 ]
             },
             "right": {
-                "Port": "B",
-                "Direction": 1,
+                "port": "B",
+                "direction": 1,
                 "bias": 0,
                 "maxSpeed": 945.0,
                 "ff": [
@@ -37,14 +38,14 @@
             }
         }
     },
-    "gyro": {
-        "Port": [
-            "A",
-            "B"
-        ],
-        "Direction": [
-            1,
-            1
-        ]
+    "gyro1": {
+        "port": "3",
+        "direction": 1,
+        "bias": 0
+    },
+    "gyro2": {
+        "port": "4",
+        "direction": 1,
+        "bias": 0
     }
 }
