@@ -1,8 +1,7 @@
 import micropython
 from _thread import LockType
-from math import sin, cos, radians
+from math import sin, cos, radians, pi
 from mytools import thread
-from typing import List, NoReturn
 
 
 class DiffrentialDriveOdometry:
@@ -17,22 +16,27 @@ class DiffrentialDriveOdometry:
 
         self.run = False
 
-    @micropython.native
+        self.lm_phi, self.rm_phi = drivebase.getRot()
+
+    # @micropython.native
     @thread
-    def start(self) -> NoReturn:
+    def start(self) -> None:
         self.run = True
 
         past_lm_pos, past_rm_pos = self.drivebase.getRot()
+        theata = self.theata
 
         while self.run:
 
-            lm_pos, rm_pos = self.drivebase.getRot()
+            self.lm_phi, self.rm_phi = self.drivebase.getRot()
 
-            Vl = lm_pos - past_lm_pos
-            Vr = rm_pos - past_rm_pos
+            Vl = self.lm_phi - past_lm_pos
+            Vr = self.rm_phi - past_rm_pos
 
-            V = self.drivebase._wheelCircumference/2*(Vr + Vl)
-            theata = radians(self.drivebase.gyro.getAngle())
+            V = self.drivebase._wheelCircumference*(Vr + Vl)/2
+            # theata = radians(self.drivebase.gyro.getAngle())
+            theata += (Vr-Vl)*self.drivebase._wheelRad/self.drivebase._DBM
+            theata %= 2*pi
 
             Vx = V*cos(theata)
             Vy = V*sin(theata)
@@ -42,19 +46,24 @@ class DiffrentialDriveOdometry:
                 self.y += Vy
                 self.theata = theata
 
-            past_lm_pos, past_rm_pos = lm_pos, rm_pos
+            past_lm_pos, past_rm_pos = self.lm_phi, self.rm_phi
 
-    @micropython.native
-    def stop(self) -> NoReturn:
+    # @micropython.native
+    def stop(self) -> None:
         self.run = False
 
-    @micropython.native
-    def getPos2d(self) -> List[float, float, float]:
+    # @micropython.native
+    def getPos2d(self) -> [float, float, float]:
         with self.drivebase.lock:
             return self.x, self.y, self.theata
 
-    @micropython.native
-    def resetPos(self, x: float = 0, y: float = 0, theata: float = 0) -> NoReturn:
+    # @micropython.native
+    def resetPos(self, x: float = 0, y: float = 0, theata: float = 0) -> None:
         with self.drivebase.lock:
             self.x, self.y, self.theata = x, y, theata
-        self.drivebase.gyro.resetAngle(theata)
+        self.drivebase.gyro.reset(theata)
+
+    # @micropython.native
+    def getRot(self) -> [float, float]:
+        with self.drivebase.lock:
+            return self.lm_phi, self.rm_phi
