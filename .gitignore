@@ -134,3 +134,4 @@ setupServer.bat
 *.data
 *.wpilib.json
 todo.txt
+*.path
