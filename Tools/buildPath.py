@@ -8,7 +8,7 @@ filename = input("Enter file name without the file extension: ")
 
 path_to_JSON = mainpath + f'\FLL\deploy\pathplanner\generatedJSON\{filename}.wpilib.json'
 path_to_Rfile = mainpath + f'\FLL\deploy\pathplanner\{filename}.path'
-path_to_Wfile = mainpath + '\FLL\Robot\paths.py'
+path_to_Wfile = mainpath + f'\FLL\Robot\Paths\path_{filename}.py'
 
 resolution = 0.001
 unitsScale = 100
