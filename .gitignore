@@ -127,10 +127,6 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-Robot/Comms/ipAdd
-Tools/Comms/ipAdd
-Tools/Comms/IP/ipAdd
-setupServer.bat
 *.data
 *.wpilib.json
 todo.txt
