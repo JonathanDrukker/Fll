@@ -1,5 +1,4 @@
 import micropython
-from typing import List, NoReturn
 from time import time
 from math import pi, sin, cos, sqrt
 
@@ -7,9 +6,9 @@ from math import pi, sin, cos, sqrt
 class PIDController:
     def __init__(self, Kp: float, Ki: float, Kd: float, target: float, feedback: float = 0):
 
-        self.Kp = micropython.const(Kp)
-        self.Ki = micropython.const(Ki)
-        self.Kd = micropython.const(Kd)
+        self.Kp = Kp
+        self.Ki = Ki
+        self.Kd = Kd
 
         self.target = target
 
@@ -20,7 +19,7 @@ class PIDController:
 
         self.integral = 0.0
 
-    @micropython.native
+    # @micropython.native
     def correction(self, feedback: float, error: float = None) -> float:
 
         if (error is None):
@@ -37,7 +36,7 @@ class PIDController:
 
         return correction
 
-    @micropython.native
+    # @micropython.native
     def calc_correction(self, error: float, dt: float) -> float:
 
         p = error
@@ -45,6 +44,12 @@ class PIDController:
         d = (error-self.lastError)/dt
 
         return self.Kp*p + self.Ki*self.integral + self.Kd*d
+
+    @micropython.native
+    def setGains(self, Kp: float, Ki: float, Kd: float) -> None:
+        self.Kp = Kp
+        self.Ki = Ki
+        self.Kd = Kd
 
 
 class RAMSETEController:
@@ -55,8 +60,8 @@ class RAMSETEController:
 
         self.halfDBM = micropython.const(halfDBM)
 
-    @micropython.native
-    def correction(self, Vx: float, Vy: float, theata: float, V: float, Omega: float, theata_d: float) -> List[float, float]:
+    # @micropython.native
+    def correction(self, Vx: float, Vy: float, theata: float, V: float, Omega: float, theata_d: float) -> [float, float]:
 
         cosTheata, sinTheata = cos(theata), sin(theata)
 
@@ -75,7 +80,7 @@ class RAMSETEController:
 
         return v - omega, v + omega
 
-    @micropython.native
-    def setGains(self, b: float, zeta: float) -> NoReturn:
+    # @micropython.native
+    def setGains(self, b: float, zeta: float) -> None:
         self.b = b
         self.zeta = zeta
