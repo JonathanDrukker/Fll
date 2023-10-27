@@ -9,7 +9,7 @@ class JSONToClass:
 
 
 class config(JSONToClass):
-    def __init__(self, filename: str = 'parameters.json'):
+    def __init__(self, filename: str = 'config.json'):
         with open(filename, 'r') as f:
             super().__init__(json.load(f))
 
