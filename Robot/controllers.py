@@ -45,7 +45,7 @@ class PIDController:
 
         return self.Kp*p + self.Ki*self.integral + self.Kd*d
 
-    @micropython.native
+    # @micropython.native
     def setGains(self, Kp: float, Ki: float, Kd: float) -> None:
         self.Kp = Kp
         self.Ki = Ki
