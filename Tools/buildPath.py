@@ -35,12 +35,15 @@ Vl, Vr = 0, 0
 
 for index, waypoint in enumerate(waypoints):
 
-    if checkStopPoint and waypoint['velocity'] == 0 and len(segment) > 0:
-        path.append(segment)
-        segment = []
-        checkStopPoint = False
+    if waypoint['velocity'] == 0 and len(segment) > 0:
+        if checkStopPoint:
+            path.append(segment)
+            segment = []
+            checkStopPoint = False
+        else:
+            checkStopPoint = True
     else:
-        checkStopPoint = True
+        checkStopPoint = False
 
     # Time
     new_waypoint["time"] = waypoint["time"]
@@ -77,8 +80,8 @@ for index, waypoint in enumerate(waypoints):
 
         if dt == 0:
             if len(segment) > 0:
-                new_waypoint["accL"] = segment['accL'][-1]
-                new_waypoint["accR"] = segment['accR'][-1]
+                new_waypoint["accL"] = segment[-1]['accL']
+                new_waypoint["accR"] = segment[-1]['accR']
             else:
                 new_waypoint["accL"] = path[-1][-1]['accL']
                 new_waypoint["accR"] = path[-1][-1]['accR']
@@ -102,20 +105,24 @@ for index, waypoint in enumerate(waypoints):
 
 # Stop Events
 
-stopEvents = []
-for point in points["waypoints"]:
-    if point["isStopPoint"]:
+stopEvents = {}
+count = 0
+for index, point in enumerate(points["waypoints"]):
+    if point["isStopPoint"] or point["isReversal"]:
 
         commands = []
-        for index, i in enumerate(point["stopEvent"]["names"][::2]):
-            commands.append(f"{i}{point['stopEvent']['names'][index*2+1]}")
+        for _index, i in enumerate(point["stopEvent"]["names"][::2]):
+            commands.append(f"{i}{point['stopEvent']['names'][_index*2+1]}")
+
         executionBehavior = point["stopEvent"]["executionBehavior"]
 
         waitTime = point["stopEvent"]["waitTime"]
         waitBehavior = point["stopEvent"]["waitBehavior"]
 
-        stopEvents.append({"commands": commands, "executionBehavior": executionBehavior,
-                           "waitTime": waitTime, "waitBehavior": waitBehavior})
+        stopEvents[index-count] = {"commands": commands, "executionBehavior": executionBehavior,
+                                   "waitTime": waitTime, "waitBehavior": waitBehavior}
+    else:
+        count += 1
 
 # Markers
 
@@ -131,11 +138,8 @@ for marker in points["markers"]:
 
     markers[time] = commands
 
-# Reversed Path
-isReversed = True if points['isReversed'] else False
-
-with open(path_to_Wfile+".txt", 'w') as f:
-    f.write(f"""{dict(stopEvents=stopEvents, markers=markers, reversed=isReversed)}""")
+with open(path_to_Wfile+".events", 'w') as f:
+    f.write(f"""{dict(stopEvents=stopEvents, markers=markers)}""")
 
 with open(path_to_Wfile+".csv", 'w', newline='') as f:
     w = csv.DictWriter(f, path[0][0].keys())
@@ -143,5 +147,4 @@ with open(path_to_Wfile+".csv", 'w', newline='') as f:
     for segment in path:
         for waypoint in segment:
             w.writerow(waypoint)
-        w.writerow({"time": "None", 'x': "None", 'y': "None", "theata": "None",
-                   "V": "None", "omega": "None", "accL": "None", "accR": "None"})
+        f.write("\n")
