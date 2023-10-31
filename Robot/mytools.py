@@ -1,8 +1,8 @@
-from _thread import start_new_thread
 import micropython
+from _thread import start_new_thread
 
 
-@micropython.native
+# @micropython.native
 def mean(*args: float) -> float:
     """
     This function returns the mean of the given numbers.
@@ -13,7 +13,7 @@ def mean(*args: float) -> float:
     return sum(args)/len(args)
 
 
-@micropython.native
+# @micropython.native
 def thread(func):
     """
     This decorator runs the given function in a new thread.
