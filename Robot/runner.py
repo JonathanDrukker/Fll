@@ -1,7 +1,6 @@
 import micropython
 from gc import collect
 from _thread import allocate_lock
-from threading import List, NoReturn
 from time import time
 from controllers import RAMSETEController
 from odometry import DiffrentialDriveOdometry
@@ -12,72 +11,93 @@ class Runner:
 
     lock = allocate_lock()
 
-    def __init__(self, lMotor: tuple, rMotor: tuple, gyro: tuple,
-                 wheelRadius: float, DBM: float) -> NoReturn:
+    def __init__(self, config: dict):
 
-        self.drivebase = DriveBase(lMotor, rMotor, gyro, wheelRadius, DBM, self.lock)
+        self.drivebase = DriveBase(config, self.lock)
         self.odometry = DiffrentialDriveOdometry(self.drivebase, self.lock)
 
-    @micropython.native
-    def path(self, path: tuple, b: float, zeta: float, Kacc: float, _log: bool = False) -> List[list, int]:
+    # @micropython.native
+    def path(self, path: str, b: float, zeta: float, _log: bool = False) -> [list, int]:
         counter = 0
+
+        waypointsF = open("Paths/"+path+".cvs", "r")
+        self.waypointsF.readline()
+        self.lastWaypoint = self.waypointsF.readline()
+
+        with open("Paths/"+path+".events", "r") as f:
+            stopEvents, markers = eval(f.readline())
+        self.markersHandler(markers)
 
         logs = []
 
-        RAMSETE = RAMSETEController(b, zeta, self._halfDBM)
+        RAMSETE = RAMSETEController(b, zeta, self.drivebase._halfDBM)
+        self.odometry.resetPos(self.lastWaypoint[1], self.lastWaypoint[2], self.lastWaypoint[3])
 
-        for spline in path:
-            log, count = self.spline(spline, RAMSETE, Kacc, _log)
+        while True:
+            log, count = self.spline(waypointsF, RAMSETE, _log)
 
             counter += count
-            logs.append(log)
+            logs += log
+
+            self.stopEventsHandler(len(logs), stopEvents)
 
         return logs, counter
 
-    @micropython.native
-    def spline(self, path: tuple, RAMSETE: RAMSETEController, Kacc: float, _log: bool = False) -> List[list, int]:
-        count = 0
+    # @micropython.native
+    def spline(self, waypointsFile: object, RAMSETE: RAMSETEController, _log: bool = False) -> [list, int, dict]:
         collect()
+        count = 0
+
+        self.lastWaypoint = self.getTargetWaypoint(0, waypointsFile)
 
         if _log:
             log = []
         else:
             log = None
 
-        startTime = time() - path[0]['time']
+        startTime = time() - self.lastWaypoint[0]
         cTime = 0.0
-        index = 0
 
-        while cTime <= path[-1]['time']:
+        while True:
+
             cTime = time() - startTime
-            index, waypoint = self.getTargetWaypoint(cTime, index, path)
+            waypoint = self.getTargetWaypointFromFile(cTime, waypointsFile)
+            if waypoint is None:
+                break
 
-            currentX, currentY = self.odometry.getPos2d()
-            currentTheata = self.gyro.getRadians()
-
-            Vx, Vy = waypoint['x'] - currentX, waypoint['y'] - currentY
+            currentX, currentY, currentTheata = self.odometry.getPos2d()
+            Vx, Vy = waypoint[1] - currentX, waypoint[2] - currentY
 
             Vl, Vr = RAMSETE.correction(Vx, Vy, currentTheata,
-                                        waypoint['V'], waypoint['omega'], waypoint['theata'])
+                                        waypoint[4], waypoint[5], waypoint[3])
 
-            self.run_tank(self.motorSpeed(
-                Vl + Kacc*waypoint['accL']), self.motorSpeed(Vr + Kacc*waypoint['accR']))
+            self.drivebase.run_tank(Vl, waypoint[6], Vr, waypoint[7])
 
             if _log:
                 log.append({'time': cTime,
                             'robot': {
-                                'Pose': (currentX, currentY, currentTheata),
-                                'V': (self.lm.getSpeed(), self.rm.getSpeed())},
+                                'Pose': [currentX, currentY, currentTheata],
+                                'Phi': self.odometry.getRot()},
                             'waypoint': waypoint})
 
-        self.run_tank(0, 0)
+        self.drivebase.run_tank(0, 0)
         return log, count
 
-    @micropython.native
-    @staticmethod
-    def getTargetWaypoint(cTime: float, sIndex: int, path: tuple) -> List[dict, int]:
-        for index, waypoint in enumerate(path[sIndex:]):
-            if (waypoint['time'] - cTime > 0):
-                return index+sIndex, waypoint
-        else:
-            return index+sIndex, path[-1]
+    # @micropython.native
+    def stopEventsHandler(self, index: int, stopEvents: tuple) -> None:
+        pass
+
+    # @micropython.native
+    def markersHandler(self, markers: tuple) -> None:
+        pass
+
+    # @micropython.native
+    def getTargetWaypoint(self, cTime: float, file: object) -> dict:
+        if cTime - self.lastWaypoint['time'] > 0:
+            return self.lastWaypoint
+        while True:
+            data = file.readline()
+            if data == '':
+                return None
+            if int(data[:data.index(',')]) - cTime > 0:
+                return eval(data)
