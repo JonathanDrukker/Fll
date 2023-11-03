@@ -131,3 +131,6 @@ dmypy.json
 *.wpilib.json
 *.csv
 *.events
+todo.txt
+*.path
+*.path
