@@ -1,9 +1,9 @@
 [submodule "EV3-Comms"]
 	path = EV3-Comms
 	url = https://github.com/JonathanDrukker/EV3-Comms
-[submodule "EV3-Graphs"]
-	path = EV3-Graphs
-	url = https://github.com/JonathanDrukker/EV3-Graphs
-[submodule "EV3-RobotSim"]
-	path = EV3-RobotSim
-	url = https://github.com/JonathanDrukker/EV3-RobotSim
+[submodule "FLL-Graphs"]
+	path = FLL-Graphs
+	url = https://github.com/JonathanDrukker/FLL-Graphs
+[submodule "FLL-RobotSim"]
+	path = FLL-RobotSim
+	url = https://github.com/JonathanDrukker/FLL-RobotSim
