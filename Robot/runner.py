@@ -1,6 +1,7 @@
 import micropython
+from asyncio import sleep
 from gc import collect
-from _thread import allocate_lock
+from _thread import allocate_lock, start_new_thread
 from time import time
 from controllers import RAMSETEController
 from odometry import DiffrentialDriveOdometry
@@ -8,6 +9,12 @@ from drivebase import DriveBase
 
 
 class Runner:
+    """
+    Runner class - Used to run paths.
+    Controls everything in the robot.
+    Parameters:
+        config: dict
+    """
 
     lock = allocate_lock()
 
@@ -18,6 +25,19 @@ class Runner:
 
     # @micropython.native
     def path(self, path: str, b: float, zeta: float, _log: bool = False) -> [list, int]:
+        """
+        Traverse a path.
+        Handles events and markers.
+        Path: multiple splines connected.
+        Parameters:
+            path: str - Path name
+            b: float - Beta
+            zeta: float - Zeta
+            _log: bool - Log
+        Returns:
+            logs: list - Logs
+            counter: int - Counter
+        """
         counter = 0
 
         waypointsF = open("Paths/"+path+".cvs", "r")
@@ -45,6 +65,17 @@ class Runner:
 
     # @micropython.native
     def spline(self, waypointsFile: object, RAMSETE: RAMSETEController, _log: bool = False) -> [list, int, dict]:
+        """
+        Traverse a spline.
+        Parameters:
+            waypointsFile: object - Waypoints file
+            RAMSETE: RAMSETEController - RAMSETE controller
+            _log: bool - Log
+        Returns:
+            log: list - Log
+            count: int - Counter
+            waypoint: dict - Waypoint
+        """
         collect()
         count = 0
 
@@ -77,22 +108,69 @@ class Runner:
                 log.append({'time': cTime,
                             'robot': {
                                 'Pose': [currentX, currentY, currentTheata],
-                                'Phi': self.odometry.getRot()},
+                                'Phi': self.odometry.getPhi()},
                             'waypoint': waypoint})
 
         self.drivebase.run_tank(0, 0)
         return log, count
 
     # @micropython.native
-    def stopEventsHandler(self, index: int, stopEvents: tuple) -> None:
-        pass
+    async def stopEventsHandler(self, stopEvent: dict) -> None:
+        """
+        Handle stop events.
+        Parameters:
+            stopEvent: dict - Stop event
+        """
+        if stopEvent["waitBehavior"] == "None":
+            self.commands(stopEvent["commands"], stopEvent["execBehavior"])
+        elif stopEvent["waitBehavior"] == "Before":
+            sleep(stopEvent["waitTime"])
+            self.commands(stopEvent["commands"], stopEvent["execBehavior"])
+        elif stopEvent["waitBehavior"] == "After":
+            self.commands(stopEvent["commands"], stopEvent["execBehavior"])
+            sleep(stopEvent["waitTime"])
+        elif stopEvent["waitBehavior"] == "Minimum":
+            await self.commands(stopEvent["commands"], stopEvent["execBehavior"])
+            await sleep(stopEvent["waitTime"])
 
     # @micropython.native
-    def markersHandler(self, markers: tuple) -> None:
-        pass
+    def markersHandler(self, markers: tuple, cTime: float) -> None:
+        """
+        Handle markers.
+        Parameters:
+            markers: tuple - Markers
+            cTime: float - Current time
+        """
+        sleep(markers[0] - cTime())
+        self.commands(markers[1], "Parallel")
+        self.markersHandler(markers[2:], cTime+markers[0])
+        # TODO: make not dumb solution
+
+    # @micropython.native
+    def commands(self, commands: list, execBehavior: str) -> None:
+        """
+        Execute commands.
+        Parameters:
+            commands: list - Commands
+            execBehavior: str - Execution behavior
+        """
+        if execBehavior == "Parallel":
+            for command in commands:
+                start_new_thread(exec, (command))
+        else:
+            for command in commands:
+                exec(command)
 
     # @micropython.native
     def getTargetWaypoint(self, cTime: float, file: object) -> dict:
+        """
+        Get the target waypoint.
+        Parameters:
+            cTime: float - Current time
+            file: object - File
+        Returns:
+            waypoint: dict - Waypoint
+        """
         if cTime - self.lastWaypoint['time'] > 0:
             return self.lastWaypoint
         while True:
@@ -100,4 +178,5 @@ class Runner:
             if data == '':
                 return None
             if int(data[:data.index(',')]) - cTime > 0:
-                return eval(data)
+                self.lastWaypoint = eval(data)
+                return self.lastWaypoint
