@@ -129,7 +129,5 @@ dmypy.json
 .pyre/
 *.data
 *.wpilib.json
-todo.txt
-*.path
 *.csv
 *.events
