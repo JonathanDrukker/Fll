@@ -134,12 +134,12 @@ for marker in points["markers"]:
         commands.append(f"{i}{marker['names'][index*2+1]}")
 
     spline_index = int(marker['position'])
-    time = path[spline_index][int(round(marker['position'], 3) * (1/resolution))]
+    time = path[spline_index][int(round(marker['position'] - spline_index, 3) * (1/resolution))]['time']
 
-    markers[time] = commands
+    markers[spline_index] = (time, commands)
 
 with open(path_to_Wfile+".events", 'w') as f:
-    f.write(f"""{dict(stopEvents=stopEvents, markers=markers)}""")
+    f.write(str((stopEvents, markers)))
 
 with open(path_to_Wfile+".csv", 'w', newline='') as f:
     w = csv.DictWriter(f, path[0][0].keys())
