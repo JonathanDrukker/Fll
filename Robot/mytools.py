@@ -7,8 +7,8 @@ def mean(*args: float) -> float:
     """
     This function returns the mean of the given numbers.
 
-    Parameters: Numbers
-    Returns: Mean
+    Parameters: args: Numbers
+    Returns: int: Mean
     """
     return sum(args)/len(args)
 
@@ -16,10 +16,10 @@ def mean(*args: float) -> float:
 # @micropython.native
 def thread(func):
     """
-    This decorator runs the given function in a new thread.
+    This decorator return the given function as a thread.
 
-    Parameters: Function
-    Returns: Thread
+    Parameters: func: Function
+    Returns: func: Thread
     """
     def wrapper(*args, **kwargs):
         start_new_thread(func, args, kwargs)

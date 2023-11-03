@@ -5,6 +5,14 @@ from mytools import mean
 
 
 class Sensorbase:
+    """
+    Sensorbase class
+    Used to control the sensors and the drivebase with speical functions.
+    Parameters:
+        lLight: str
+        rLight: str
+        drivebase: object
+    """
     def __init__(self, lLight: str, rLight: str, drivebase: object):
 
         self.ll = LightSensor(lLight)
@@ -12,6 +20,12 @@ class Sensorbase:
 
     # @micropython.nativex
     def box(self, Kpid: [float, float, float] = [0, 0, 0], rfl: int = 50) -> None:
+        """
+        Used to box with light sensors.
+        Parameters:
+            Kpid: [float, float, float] - PID gains
+            rfl: int - Reflectance value
+        """
         self.drivebase.gyro.setMode("GYRO-RATE")
         PID = PIDController(*Kpid, rfl)
         while True:
@@ -22,6 +36,18 @@ class Sensorbase:
     # @micropython.native
     def LineFollow(self, speed: float, dist: float, rfl: int, side: int,
                    Kp: float, Ki: float, Kd: float, maxTime: float = None) -> None:
+        """
+        Used to follow a line with the drivebase.
+        Parameters:
+            speed: float - Speed
+            dist: float - Distance
+            rfl: int - Reflectance value
+            side: int - Side
+            Kp: float - Proportional gain
+            Ki: float - Integral gain
+            Kd: float - Derivative gain
+            maxTime: float - Max time
+        """
 
         PID = PIDController(Kp, Ki, Kd, rfl)
         cl = self.ll if side == -1 else self.rl
@@ -36,6 +62,9 @@ class Sensorbase:
 
     # @micropython.native
     def LAGPID(self) -> None:
+        """
+        Used to follow a line with the drivebase using light sensors and the gyro.
+        """
         # TODO: Line assisted gyro PID
         pass
 

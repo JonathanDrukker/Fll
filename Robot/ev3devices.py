@@ -9,6 +9,13 @@ sensor_ports = {'1': None, '2': None, '3': None, '4': None}
 
 
 class Motor:
+    """
+    This class is used to control a motor.
+    Parameters:
+        config: object
+        kwargs: dict
+    """
+
     def __init__(self, config: object, **kwargs):
 
         self._port = micropython.const(config.port)
@@ -33,40 +40,87 @@ class Motor:
 
     # @micropython.native
     def run(self, speed: float = 0, acc: float = 0) -> None:
+        """
+        Runs the motor at a given speed and acceleration.
+        Uses the ff values to calculate the duty cycle.
+        Parameters:
+            speed: float
+            acc: float
+        """
         self.dutyCycle(copysign(self.Ks, speed) + self.Kv*speed + self.Ka*acc)
 
     # @micropython.native
     def stop(self) -> None:
+        """
+        Stops the motor.
+        """
         self.dutyCycle(0)
 
     # @micropython.native
     def getAngle(self) -> float:
+        """
+        Returns the angle of the motor in degrees.
+        Returns:
+            angle: float
+        """
         return self.count() / 2 + self.bias
 
     # @micropython.native
     def getRot(self) -> float:
+        """
+        Returns the rotation of the motor in rotations(1Rot = 360Deg).
+        Returns:
+            rotation: float
+        """
         return self.getAngle() / 360
 
     # @micropython.native
     def getSpeed(self) -> float:
+        """
+        Returns the speed of the motor in degrees per second.
+        Returns:
+            speed: float
+        """
         return self.frequency() / 2
 
     # @micropython.native
     def reset(self, bias: float = 0) -> None:
+        """
+        Resets the angle of the motor.
+        Parameters:
+            bias: float
+        """
         self.bias = self.count() / 2 + bias
 
     # @micropython.native
     def count(self) -> int:
+        """
+        Returns the count of the motor.
+        Returns:
+            count: int
+        """
         self.countF.seek(0)
         return int(self.countF.read()) * self.dir
 
     # @micropython.native
     def frequency(self) -> int:
+        """
+        Returns the frequency of the motor.
+        Returns:
+            frequency: int
+        """
         self.frequencyF.seek(0)
         return int(self.frequencyF.read()) * self.dir
 
     # @micropython.native
     def dutyCycle(self, dutyCycle: int) -> None:
+        """
+        Sets the duty cycle of the motor.
+        Duty cycle is a value between -100 and 100 but
+            function will limit it to that range.
+        Parameters:
+            dutyCycle: int
+        """
         self.dutyCycleF.seek(0)
         if abs(dutyCycle) < 100:
             self.dutyCycleF.write(str(int(dutyCycle)))
@@ -76,12 +130,27 @@ class Motor:
 
     # @micropython.native
     def setCommand(self, command: str = "run-direct"):
+        """
+        Sets the command of the motor.
+        Parameters:
+            command: str
+        """
         self.commandF.seek(0)
         self.commandF.write(command)
         self.commandF.flush()
 
     # @micropython.native
     def analysis(self, save: bool = True, filename: str = 'analysis.log') -> tuple:
+        """
+        Returns the analysis of the motor.
+        Parameters:
+            save: bool
+            filename: str
+        Returns:
+            dutys: list
+            speeds: list
+            acc: list
+        """
 
         times = []
         speeds = []
@@ -133,6 +202,12 @@ class Motor:
 
 
 class Gyro:
+    """
+    This class is used to control a gyro sensor.
+    Parameters:
+        config: object
+        kwargs: dict
+    """
     def __init__(self, config: object, **kwargs):
 
         self._port = micropython.const(config.port)
@@ -152,38 +227,87 @@ class Gyro:
 
     # @micropython.native
     def getAngle(self) -> float:
+        """
+        Returns the angle of the gyro in degrees.
+        Returns:
+            angle: float
+        """
         return self.read() * self.dir + self.bias
 
+    def getProcessedAngle(self) -> float:
+        """
+        Returns the angle of the gyro in degrees.
+        Returns:
+            angle: float - [0, 360]
+        """
+        angle = self.getAngle() % 360
+        if angle < 0:
+            angle += 360
+        return angle
+
     # @micropython.native
-    def getRate(self) -> float:
+    def getSpeed(self) -> float:
+        """
+        Returns the speed of the gyro in degrees per second.
+        Returns:
+            speed: float
+        """
         self.setMode("GYRO-RATE")
         val = self.read() * self.dir
         self.setMode("GYRO-ANG")
         return val
 
     # @micropython.native
-    def reset(self, angle: int = 0) -> None:
+    def reset(self, angle: float = 0) -> None:
+        """
+        Resets the angle of the gyro.
+        Parameters:
+            angle: float
+        """
         self.bias = self.read() + angle
 
     # @micropython.native
     def calibrate(self) -> None:
+        """
+        Calibrates the gyro.
+        Used to stop drift.
+        GYRO IS NOT ALLOWED TO MOVE WHILE CALIBRATING.
+        Calibration time: 2 seconds.
+        """
         self.setMode("GYRO-CAL")
         sleep(2)
         self.setMode("GYRO-ANG")
 
     # @micropython.native
     def read(self) -> int:
+        """
+        Returns the value currently reading.
+        Returns:
+            value: int
+        """
         self.valueF.seek(0)
         return int(self.valueF.read())
 
     # @micropython.native
     def setMode(self, mode: str = "GYRO-ANG") -> None:
+        """
+        Sets the mode of the gyro.
+        Parameters:
+            mode: str
+        """
         self.modeF.seek(0)
         self.modeF.write(mode)
         self.modeF.flush()
 
 
 class DualGyro(Gyro):
+    """
+    This class is used to control two gyro sensors simultaneously.
+    Parameters:
+        config1: object
+        config2: object
+        kwargs: dict
+    """
     def __init__(self, config1: dict, config2: dict, **kwargs):
         self.gyro1 = Gyro(config1)
         self.gyro2 = Gyro(config2)
@@ -193,24 +317,51 @@ class DualGyro(Gyro):
 
     # @micropython.native
     def getAngle(self) -> float:
+        """
+        Returns the angle of the gyro in degrees.
+        Returns:
+            angle: float
+        """
         return (self.gyro1.getAngle() + self.gyro2.getAngle()) / 2
 
     # @micropython.native
     def getRate(self) -> float:
+        """
+        Returns the speed of the gyro in degrees per second.
+        Returns:
+            speed: float
+        """
         return (self.gyro1.getRate() + self.gyro2.getRate()) / 2
 
     # @micropython.native
     def reset(self, angle: int = 0) -> None:
+        """
+        Resets the angle of the gyro.
+        Parameters:
+            angle: float
+        """
         self.gyro1.reset(angle)
         self.gyro2.reset(angle)
 
     # @micropython.native
     def calibrate(self, angle: int = 0) -> None:
+        """
+        Calibrates the gyro.
+        Used to stop drift.
+        GYROS IS NOT ALLOWED TO MOVE WHILE CALIBRATING.
+        Calibration time: 4 seconds.
+        """
         self.gyro1.calibrate(angle)
         self.gyro2.calibrate(angle)
 
 
 class LightSensor:
+    """
+    This class is used to control a light sensor.
+    Parameters:
+        config: object
+        kwargs: dict
+    """
     def __init__(self, config: object, **kwargs):
 
         self._port = micropython.const(config.port)
@@ -226,10 +377,20 @@ class LightSensor:
 
     # @micropython.native
     def getReflect(self) -> int:
+        """
+        Returns the reflectivity of the light sensor.
+        Returns:
+            reflectivity: int
+        """
         return self.read()
 
     # @micropython.native
     def getColor(self) -> int:
+        """
+        Returns the color of the light sensor.
+        Returns:
+            color: int
+        """
         self.setMode('COL-COLOR')
         val = self.read()
         self.setMode("COL-REFLECT")
@@ -237,11 +398,21 @@ class LightSensor:
 
     # @micropython.native
     def read(self) -> int:
+        """
+        Returns the value currently reading.
+        Returns:
+            value: int
+        """
         self.valueF.seek(0)
         return int(self.valueF.read())
 
     # @micropython.native
     def setMode(self, mode: str = "COL-REFLECT") -> None:
+        """
+        Sets the mode of the light sensor.
+        Parameters:
+            mode: str
+        """
         self.modeF.seek(0)
         self.modeF.write(mode)
         self.modeF.flush()
@@ -249,6 +420,9 @@ class LightSensor:
 
 # @micropython.native
 def MotorPorts() -> None:
+    """
+    Updates dict of motor ports.
+    """
     for dir in listdir("/sys/class/tacho-motor"):
         with open("/sys/class/tacho-motor/"+dir+"/address", 'r') as f:
             addr = f.read()
@@ -257,6 +431,9 @@ def MotorPorts() -> None:
 
 # @micropython.native
 def SensorPorts() -> None:
+    """
+    Updates dict of sensor ports.
+    """
     for dir in listdir("/sys/class/lego-sensor"):
         with open("/sys/class/lego-sensor/"+dir+"/address", 'r') as f:
             addr = f.read()
@@ -264,6 +441,9 @@ def SensorPorts() -> None:
 
 
 def startup() -> None:
+    """
+    Updates dicts of ports.
+    """
     MotorPorts()
     SensorPorts()
 

@@ -2,6 +2,11 @@ import json
 
 
 class JSONToClass:
+    """
+    Converts a JSON object to a class object.
+    Parameters:
+        JSON: dict
+    """
     def __init__(self, JSON: dict = None):
         for key, value in JSON.items():
             if isinstance(value, dict): setattr(self, key, JSONToClass(value))
@@ -9,6 +14,12 @@ class JSONToClass:
 
 
 class config(JSONToClass):
+    """
+    Config class
+    Used to load the config file.
+    Parameters:
+        filename: str
+    """
     def __init__(self, filename: str = 'config.json'):
         with open(filename, 'r') as f:
             super().__init__(json.load(f))
