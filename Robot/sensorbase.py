@@ -103,14 +103,6 @@ class Sensorbase:
             self.drivebase.run_tank(speed + corr, speed - corr)
 
     # @micropython.native
-    def LAGPID(self) -> None:
-        """
-        Used to follow a line with the drivebase using light sensors and the gyro.
-        """
-        # TODO: Line assisted gyro PID
-        pass
-
-    # @micropython.native
     def Box(self, speed: int, rfl: int, side: int, maxTime: float = 60) -> None:
         """
         Used to follow a line with the drivebase using light sensors and the gyro.
