@@ -1,4 +1,5 @@
 import micropython
+from time import time
 from ev3devices_basic import LightSensor
 from controllers import PIDController
 from mytools import mean
@@ -18,24 +19,62 @@ class Sensorbase:
         self.ll = LightSensor(lLight)
         self.rl = LightSensor(rLight)
 
-    # @micropython.nativex
-    def box(self, Kpid: [float, float, float] = [0, 0, 0], rfl: int = 50) -> None:
-        """
-        Used to box with light sensors.
-        Parameters:
-            Kpid: [float, float, float] - PID gains
-            rfl: int - Reflectance value
-        """
-        self.drivebase.gyro.setMode("GYRO-RATE")
-        PID = PIDController(*Kpid, rfl)
-        while True:
-            PID.correction()
-
-        self.drivebase.stop()
+        self.drivebase = drivebase
 
     # @micropython.native
-    def LineFollow(self, speed: float, dist: float, rfl: int, side: int,
-                   Kp: float, Ki: float, Kd: float, maxTime: float = None) -> None:
+    def PIDDrive(self, speed: float, dist: float, target: float,
+                 Kp: float, Ki: float, Kd: float, maxTime: float = 60) -> None:
+        """
+        Used to drive with the drivebase using the gyro and PID.
+        Parameters:
+            speed: float - Speed
+            dist: float - Distance
+            target: float - Target
+            Kp: float - Proportional gain
+            Ki: float - Integral gain
+            Kd: float - Derivative gain
+            maxTime: float - Max time
+        """
+        PID = PIDController(Kp, Ki, Kd, target)
+
+        startAngle = mean(self.drivebase.getAngle())
+        st = time()
+
+        while (mean(self.drivebase.getAngle()) - startAngle < dist / self.drivebase._wheelCircumference and
+               time() - st < maxTime):
+
+            correction = PID.correction(self.drivebase.gyro.angle())
+
+            self.drivebase.run_tank(speed+correction, speed-correction)
+
+    # @micropython.native
+    def PIDTurn(self, speed: float, angle: float, target: float,
+                Kp: float, Ki: float, Kd: float, maxTime: float = 60) -> None:
+        """
+        Used to turn with the drivebase using the gyro and PID.
+        Parameters:
+            speed: float - Speed
+            angle: float - Angle
+            target: float - Target
+            Kp: float - Proportional gain
+            Ki: float - Integral gain
+            Kd: float - Derivative gain
+            maxTime: float - Max time
+        """
+        PID = PIDController(Kp, Ki, Kd, target)
+
+        st = time()
+
+        while (self.drivebase.gyro.angle() < angle and
+               time() - st < maxTime):
+
+            correction = PID.correction(self.drivebase.gyro.angle())
+
+            self.drivebase.run_tank(speed+correction, -speed-correction)
+
+    # @micropython.native
+    def PIDLineFollow(self, speed: float, dist: float, rfl: int, side: int,
+                      Kp: float, Ki: float, Kd: float, maxTime: float = 60) -> None:
         """
         Used to follow a line with the drivebase.
         Parameters:
@@ -52,10 +91,13 @@ class Sensorbase:
         PID = PIDController(Kp, Ki, Kd, rfl)
         cl = self.ll if side == -1 else self.rl
 
-        start = mean(self.drivebase.getAngle())
+        startAngle = mean(self.drivebase.getAngle())
 
-        while (mean(self.drivebase.getAngle()) - start <
-               dist / self.drivebase._wheelCircumference):
+        st = time()
+
+        while (mean(self.drivebase.getAngle()) - startAngle <
+               dist / self.drivebase._wheelCircumference and
+               time() - st < maxTime):
 
             corr = PID.correction(cl.getReflectedLight())
             self.drivebase.run_tank(speed + corr, speed - corr)
@@ -68,4 +110,15 @@ class Sensorbase:
         # TODO: Line assisted gyro PID
         pass
 
-# TODO
+    # @micropython.native
+    def Box(self, speed: int, rfl: int, side: int, maxTime: float = 60) -> None:
+        """
+        Used to follow a line with the drivebase using light sensors and the gyro.
+        Parameters:
+            speed: int - Speed
+            rfl: int - Reflectance value
+            side: int - Side
+            maxTime: float - Max time
+        """
+        # TODO
+        pass
