@@ -1,6 +1,6 @@
 import micropython
 from time import time
-from ev3devices_basic import LightSensor
+from ev3devices import LightSensor
 from controllers import PIDController
 from mytools import mean
 
@@ -103,7 +103,7 @@ class Sensorbase:
             self.drivebase.run_tank(speed + corr, speed - corr)
 
     # @micropython.native
-    def Box(self, speed: int, rfl: int, side: int, maxTime: float = 60) -> None:
+    def PIDBox(self, speed: int, rfl: int, Kp: float, Ki: float, Kd: float, maxTime: float = 60) -> None:
         """
         Used to follow a line with the drivebase using light sensors and the gyro.
         Parameters:
@@ -112,5 +112,24 @@ class Sensorbase:
             side: int - Side
             maxTime: float - Max time
         """
-        # TODO
-        pass
+        PID = PIDController(Kp, Ki, Kd, rfl)
+
+        st = time()
+
+        lRFL, rRFL = self.ll.getReflect(), self.rl.getReflect()
+
+        while (lRFL != rfl and rRFL != rfl and time() - st < maxTime):
+
+            correction = PID.correction(lRFL - rRFL)  # check if this is correct
+
+            avgRFL = mean(lRFL, rRFL)
+            if avgRFL == 0:
+                self.drivebase.run_tank(correction, -correction)
+            elif avgRFL > rfl:
+                self.drivebase.run_tank(speed+correction, speed-correction)
+            else:
+                self.drivebase.run_tank(-speed+correction, -speed-correction)
+
+            lRFL, rRFL = self.ll.getReflect(), self.rl.getReflect()
+
+        self.drivebase.stop()
