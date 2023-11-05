@@ -105,11 +105,7 @@ class Runner:
             self.drivebase.run_tank(Vl, waypoint[6], Vr, waypoint[7])
 
             if _log:
-                log.append({'time': cTime,
-                            'robot': {
-                                'Pose': [currentX, currentY, currentTheata],
-                                'Phi': self.odometry.getPhi()},
-                            'waypoint': waypoint})
+                log.append((cTime, currentX, currentY, currentTheata, self.odometry.getPhi()))
 
         self.drivebase.run_tank(0, 0)
         return log, count
