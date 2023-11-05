@@ -14,6 +14,7 @@ class Sensorbase:
         rLight: str
         drivebase: object
     """
+
     def __init__(self, lLight: str, rLight: str, drivebase: object):
 
         self.ll = LightSensor(lLight)
@@ -23,7 +24,7 @@ class Sensorbase:
 
     # @micropython.native
     def Drive(self, speed: float, dist: float, target: float,
-                 Kp: float, Ki: float, Kd: float, maxTime: float = 60) -> None:
+              Kp: float, Ki: float, Kd: float, timeout: float = 60) -> None:
         """
         Used to drive with the drivebase using the gyro and PID.
         Parameters:
@@ -33,7 +34,7 @@ class Sensorbase:
             Kp: float - Proportional gain
             Ki: float - Integral gain
             Kd: float - Derivative gain
-            maxTime: float - Max time
+            timeout: float - Max time
         """
         PID = PIDController(Kp, Ki, Kd, target)
 
@@ -41,7 +42,7 @@ class Sensorbase:
         st = time()
 
         while (mean(self.drivebase.getAngle()) - startAngle < dist / self.drivebase._wheelCircumference and
-               time() - st < maxTime):
+               time() - st < timeout):
 
             correction = PID.correction(self.drivebase.gyro.angle())
 
@@ -49,7 +50,7 @@ class Sensorbase:
 
     # @micropython.native
     def Turn(self, speed: float, angle: float, target: float,
-                Kp: float, Ki: float, Kd: float, maxTime: float = 60) -> None:
+             Kp: float, Ki: float, Kd: float, timeout: float = 60) -> None:
         """
         Used to turn with the drivebase using the gyro and PID.
         Parameters:
@@ -59,14 +60,14 @@ class Sensorbase:
             Kp: float - Proportional gain
             Ki: float - Integral gain
             Kd: float - Derivative gain
-            maxTime: float - Max time
+            timeout: float - Max time
         """
         PID = PIDController(Kp, Ki, Kd, target)
 
         st = time()
 
         while (self.drivebase.gyro.angle() < angle and
-               time() - st < maxTime):
+               time() - st < timeout):
 
             correction = PID.correction(self.drivebase.gyro.angle())
 
@@ -74,7 +75,7 @@ class Sensorbase:
 
     # @micropython.native
     def LineFollow(self, speed: float, dist: float, rfl: int, side: int,
-                      Kp: float, Ki: float, Kd: float, maxTime: float = 60) -> None:
+                   Kp: float, Ki: float, Kd: float, timeout: float = 60) -> None:
         """
         Used to follow a line with the drivebase.
         Parameters:
@@ -85,7 +86,7 @@ class Sensorbase:
             Kp: float - Proportional gain
             Ki: float - Integral gain
             Kd: float - Derivative gain
-            maxTime: float - Max time
+            timeout: float - Max time
         """
 
         PID = PIDController(Kp, Ki, Kd, rfl)
@@ -97,20 +98,20 @@ class Sensorbase:
 
         while (mean(self.drivebase.getAngle()) - startAngle <
                dist / self.drivebase._wheelCircumference and
-               time() - st < maxTime):
+               time() - st < timeout):
 
             corr = PID.correction(cl.getReflectedLight())
             self.drivebase.run_tank(speed + corr, speed - corr)
 
     # @micropython.native
-    def Box(self, speed: int, rfl: int, Kp: float, Ki: float, Kd: float, maxTime: float = 60) -> None:
+    def Box(self, speed: int, rfl: int, Kp: float, Ki: float, Kd: float, timeout: float = 60) -> None:
         """
         Used to follow a line with the drivebase using light sensors and the gyro.
         Parameters:
             speed: int - Speed
             rfl: int - Reflectance value
             side: int - Side
-            maxTime: float - Max time
+            timeout: float - Max time
         """
         PID = PIDController(Kp, Ki, Kd, rfl)
 
@@ -118,7 +119,7 @@ class Sensorbase:
 
         lRFL, rRFL = self.ll.getReflect(), self.rl.getReflect()
 
-        while (lRFL != rfl and rRFL != rfl and time() - st < maxTime):
+        while (lRFL != rfl and rRFL != rfl and time() - st < timeout):
 
             correction = PID.correction(lRFL - rRFL)  # check if this is correct
 
