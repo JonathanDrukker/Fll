@@ -1,5 +1,4 @@
 import micropython
-from _thread import LockType
 from ev3devices import Motor, Gyro, DualGyro
 
 
@@ -9,11 +8,8 @@ class DriveBase:
     Used to control the drivebase.
     Parameters:
         config: object
-        lock: LockType
     """
-    def __init__(self, config: object, lock: LockType):
-
-        self.lock = lock
+    def __init__(self, config: object):
 
         self.lm = Motor(config.drivebase.motor.left)
         self.rm = Motor(config.drivebase.motor.right)
