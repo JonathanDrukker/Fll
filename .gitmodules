@@ -4,6 +4,3 @@
 [submodule "FLL-Graphs"]
 	path = FLL-Graphs
 	url = https://github.com/JonathanDrukker/FLL-Graphs
-[submodule "FLL-RobotSim"]
-	path = FLL-RobotSim
-	url = https://github.com/JonathanDrukker/FLL-RobotSim
