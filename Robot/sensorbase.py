@@ -22,7 +22,7 @@ class Sensorbase:
         self.drivebase = drivebase
 
     # @micropython.native
-    def PIDDrive(self, speed: float, dist: float, target: float,
+    def Drive(self, speed: float, dist: float, target: float,
                  Kp: float, Ki: float, Kd: float, maxTime: float = 60) -> None:
         """
         Used to drive with the drivebase using the gyro and PID.
@@ -48,7 +48,7 @@ class Sensorbase:
             self.drivebase.run_tank(speed+correction, speed-correction)
 
     # @micropython.native
-    def PIDTurn(self, speed: float, angle: float, target: float,
+    def Turn(self, speed: float, angle: float, target: float,
                 Kp: float, Ki: float, Kd: float, maxTime: float = 60) -> None:
         """
         Used to turn with the drivebase using the gyro and PID.
@@ -73,7 +73,7 @@ class Sensorbase:
             self.drivebase.run_tank(speed+correction, -speed-correction)
 
     # @micropython.native
-    def PIDLineFollow(self, speed: float, dist: float, rfl: int, side: int,
+    def LineFollow(self, speed: float, dist: float, rfl: int, side: int,
                       Kp: float, Ki: float, Kd: float, maxTime: float = 60) -> None:
         """
         Used to follow a line with the drivebase.
@@ -103,7 +103,7 @@ class Sensorbase:
             self.drivebase.run_tank(speed + corr, speed - corr)
 
     # @micropython.native
-    def PIDBox(self, speed: int, rfl: int, Kp: float, Ki: float, Kd: float, maxTime: float = 60) -> None:
+    def Box(self, speed: int, rfl: int, Kp: float, Ki: float, Kd: float, maxTime: float = 60) -> None:
         """
         Used to follow a line with the drivebase using light sensors and the gyro.
         Parameters:
