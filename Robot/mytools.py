@@ -1,5 +1,6 @@
 import micropython
 from _thread import start_new_thread
+from time import sleep as _sleep
 
 
 # @micropython.native
@@ -24,3 +25,13 @@ def thread(func):
     def wrapper(*args, **kwargs):
         start_new_thread(func, args, kwargs)
     return wrapper
+
+
+# @micropython.native
+async def sleep(time: float):
+    """
+    This function sleeps for the given time.
+
+    Parameters: time: float - Time
+    """
+    _sleep(time)
