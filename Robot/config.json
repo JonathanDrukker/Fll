@@ -38,14 +38,60 @@
             }
         }
     },
-    "gyro1": {
-        "port": "3",
-        "direction": 1,
-        "bias": 0
+    "motors": {
+        "left": {
+            "port": "A",
+            "direction": 1,
+            "bias": 0,
+            "maxSpeed": 0.0,
+            "ff": [
+                0,
+                0,
+                0
+            ],
+            "speedKpid": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "posKpid": [
+                0.0,
+                0.0,
+                0.0
+            ]
+        },
+        "right": {
+            "port": "C",
+            "direction": 1,
+            "bias": 0,
+            "maxSpeed": 0.0,
+            "ff": [
+                0,
+                0,
+                0
+            ],
+            "speedKpid": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "posKpid": [
+                0.0,
+                0.0,
+                0.0
+            ]
+        }
     },
-    "gyro2": {
-        "port": "4",
-        "direction": 1,
-        "bias": 0
+    "gyro": {
+        "S1": {
+            "port": "3",
+            "direction": 1,
+            "bias": 0
+        },
+        "S2": {
+            "port": "4",
+            "direction": 1,
+            "bias": 0
+        }
     }
 }
