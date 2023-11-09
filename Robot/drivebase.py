@@ -13,8 +13,8 @@ class DriveBase:
 
         self.lm = Motor(config.drivebase.motor.left)
         self.rm = Motor(config.drivebase.motor.right)
-        if hasattr(config, "gyro2"): DualGyro(config.gyro1, config.gyro2)
-        else: self.gyro = Gyro(config.gyro)
+        if not hasattr(config.gyro, '2'): self.gyro = Gyro(config.gyro.S1)
+        else: self.gyro = DualGyro(config.gyro.S1, config.gyro.S2)
 
         self._wheelRad = micropython.const(config.wheel.radius)
         self._wheelDiameter = micropython.const(config.wheel.diameter)
@@ -24,7 +24,7 @@ class DriveBase:
         self._halfDBM = micropython.const(config.drivebase.halfDBM)
 
     # @micropython.native
-    def run_tank(self, Vl, Al, Vr, Ar) -> None:
+    def run_tank(self, Vl: float, Vr: float, Al: float = 0, Ar: float = 0) -> None:
         """
         Run the drivebase at a given speed and acceleration.
         Parameters:
@@ -33,8 +33,8 @@ class DriveBase:
             Vr: float - Right motor speed
             Ar: float - Right motor acceleration
         """
-        self.lm.run(self.motorSpeed(Vl))
-        self.rm.run(self.motorSpeed(Vr))
+        self.lm.run(self.motorSpeed(Vl), self.motorSpeed(Al))
+        self.rm.run(self.motorSpeed(Vr), self.motorSpeed(Ar))
 
     # @micropython.native
     def stop(self) -> None:
@@ -48,6 +48,7 @@ class DriveBase:
     def motorSpeed(self, V: float) -> float:
         """
         Convert the speed to motor speed.
+        CM to Deg
         Parameters:
             V: float - Speed
         Returns:
