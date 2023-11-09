@@ -14,21 +14,16 @@ class Motor(_Motor):
         Port: str
         Direction: int
         bias: float
-        acc: float
         speedKpid: [float, float, float]
         posKpid: [float, float, float]
     """
 
-    def __init__(self, Port: str, Direction: int, bias: float = 0, acc: float = None,
-                 speedKpid: [float, float, float] = [0, 0, 0],
-                 posKpid: [float, float, float] = [0, 0, 0]):
+    def __init__(self, config, **kwargs):
 
-        super().__init__(Port, Direction, bias)
+        super().__init__(config)
 
-        self.acc = acc
-
-        self.speedKpid = speedKpid
-        self.posKpid = posKpid
+        self.speedKpid = config.speedKpid
+        self.posKpid = config.posKpid
 
     # @micropython.native
     def TurnABS(self, angle: float, Kpid: [float, float, float] = None, speed: float = 0,
@@ -43,11 +38,11 @@ class Motor(_Motor):
             wait: bool
         """
         # @micropython.native
-        def main(angle: float, Kpid: [float, float, float] = None, speed: float = 0,
+        def main(angle: float, Kp: float = None, Ki: float = None, Kd: float = None, speed: float = 0,
                  timeout: float = 60):
             if Kpid is None:
-                Kpid = self.posKpid
-            PID = PIDController(*Kpid, angle)
+                Kp, Ki, Kd = self.posKpid
+            PID = PIDController(Kp, Ki, Kd, angle)
 
             st = time()
 
