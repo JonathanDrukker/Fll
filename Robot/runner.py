@@ -1,11 +1,12 @@
 import micropython
-from asyncio import sleep
 from gc import collect
 from _thread import allocate_lock, start_new_thread
 from time import time
+from mytools import sleep
 from controllers import RAMSETEController
 from odometry import DiffrentialDriveOdometry
 from drivebase import DriveBase
+from ev3devices_advanced import Motor
 
 
 class Runner:
@@ -20,8 +21,11 @@ class Runner:
 
     def __init__(self, config: dict):
 
-        self.drivebase = DriveBase(config, self.lock)
+        self.drivebase = DriveBase(config)
         self.odometry = DiffrentialDriveOdometry(self.drivebase, self.lock)
+
+        self.lm = Motor(config.motors.left)
+        self.rm = Motor(config.motors.right)
 
     # @micropython.native
     def path(self, path: str, b: float, zeta: float, _log: bool = False) -> [list, int]:
@@ -40,7 +44,10 @@ class Runner:
         """
         counter = 0
 
+        st = time()
         waypointsF = open("Paths/"+path+".cvs", "r")
+        print("File open time:", time()-st)
+
         self.waypointsF.readline()
         self.lastWaypoint = self.waypointsF.readline()
 
@@ -102,7 +109,7 @@ class Runner:
             Vl, Vr = RAMSETE.correction(Vx, Vy, currentTheata,
                                         waypoint[4], waypoint[5], waypoint[3])
 
-            self.drivebase.run_tank(Vl, waypoint[6], Vr, waypoint[7])
+            self.drivebase.run_tank(Vl, Vr, waypoint[6], waypoint[7])
 
             if _log:
                 log.append((cTime, currentX, currentY, currentTheata, self.odometry.getPhi()))
