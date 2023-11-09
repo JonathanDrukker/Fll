@@ -448,5 +448,4 @@ def startup() -> None:
     SensorPorts()
 
 
-if __name__ != "__main__":
-    startup()
+startup()
