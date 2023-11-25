@@ -1,5 +1,6 @@
 import micropython
 from _thread import start_new_thread
+from time import time as _time
 from time import sleep as _sleep
 
 
@@ -35,3 +36,26 @@ async def sleep(time: float):
     Parameters: time: float - Time
     """
     _sleep(time)
+
+
+class Timer:
+    def __init__(self):
+        self.st = _time()
+        self.pt = None
+
+    # @micropython.native
+    def get(self):
+        return _time() - self.st
+
+    # @micropython.native
+    def reset(self):
+        self.st = _time()
+
+    # @micropython.native
+    def pause(self):
+        self.pt = _time()
+
+    # @micropython.native
+    def play(self):
+        self.st += _time() - self.pt
+        self.pt = None
