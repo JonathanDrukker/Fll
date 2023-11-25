@@ -1,5 +1,6 @@
 import micropython
 from ev3devices import Motor, Gyro, DualGyro
+from mytools import thread
 
 
 class DriveBase:
@@ -33,8 +34,40 @@ class DriveBase:
             Vr: float - Right motor speed
             Ar: float - Right motor acceleration
         """
+        self.lm.run(Vl, Al)
+        self.rm.run(Vr, Ar)
+
+    # @micropython.native
+    def run_tankCM(self, Vl: float, Vr: float, Al: float = 0, Ar: float = 0) -> None:
+        """
+        Run the drivebase at a given speed and acceleration.
+        Parameters:
+            Vl: float - Left motor speed
+            Al: float - Left motor acceleration
+            Vr: float - Right motor speed
+            Ar: float - Right motor acceleration
+        """
         self.lm.run(self.motorSpeed(Vl), self.motorSpeed(Al))
         self.rm.run(self.motorSpeed(Vr), self.motorSpeed(Ar))
+
+    # @micropython.native
+    @thread
+    def update(self) -> None:
+        """
+        PID controller for the motor speeds.
+        Update time: 10ms.
+        """
+
+        self.lm.update()
+        self.rm.update()
+
+    # @micropython.native
+    def stopUpdate(self) -> None:
+        """
+        Stops the PID controller.
+        """
+        self.lm.stopUpdate()
+        self.rm.stopUpdate()
 
     # @micropython.native
     def stop(self) -> None:
@@ -86,9 +119,10 @@ class DriveBase:
     # @micropython.native
     def reset(self) -> None:
         """
-        Reset the motors of the drivebase.
+        Reset the motors and gyro of the drivebase.
         """
         self.lm.reset(); self.rm.reset()
+        self.gyro.reset(0)
 
     def analysis(self, save: bool = True, filename: str = 'Analysis.log') -> tuple:
         """
