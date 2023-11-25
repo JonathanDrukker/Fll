@@ -2,10 +2,16 @@ import micropython
 from os import listdir
 from time import time, sleep
 from math import copysign
+from mytools import thread
 
 
 motor_ports = {'A': ['0', None], 'B': ['1', None], 'C': ['2', None], 'D': ['3', None]}
-sensor_ports = {'1': None, '2': None, '3': None, '4': None}
+sensor_ports = {'S1': None, 'S2': None, 'S3': None, 'S4': None}
+
+
+class PortError(Exception):
+    def __init__(self, port):
+        self.port = port
 
 
 class Motor:
@@ -20,6 +26,10 @@ class Motor:
 
         self._port = micropython.const(config.port)
         self._portProps = motor_ports[self._port]
+
+        if not self.connected():
+            raise PortError(self._port)
+
         self.dir = config.direction
 
         self.countF = open("/sys/bus/iio/devices/iio:device1/in_count"+self._portProps[0]+"_raw", 'r')
@@ -31,9 +41,14 @@ class Motor:
 
         self.bias = config.bias
 
+        self.speed_sp = 0
         self._maxSpeed = micropython.const(config.maxSpeed)
 
+        self.Kp = config.p
+
         self.Ks, self.Kv, self.Ka = config.ff
+
+        self._lastFrequency = 0
 
         for key, value in kwargs.items():
             setattr(self, key, value)
@@ -47,7 +62,28 @@ class Motor:
             speed: float
             acc: float
         """
-        self.dutyCycle(copysign(self.Ks, speed) + self.Kv*speed + self.Ka*acc)
+        self.speed_sp = copysign(self.Ks, speed) + self.Kv*speed + self.Ka*acc
+
+    # @micropython.native
+    @thread
+    def update(self) -> None:
+        """
+        P controller for the motor speed.
+        Update time: 7.5ms.
+        """
+
+        self.runUpdate = True
+        while self.run:
+
+            self.dutyCycle(self.speed_sp + self.Kp*(self.speed_sp - self.getSpeed()))
+            sleep(0.01)
+
+    # @micropython.native
+    def stopUpdate(self) -> None:
+        """
+        Stops the PID controller.
+        """
+        self.runUpdate = False
 
     # @micropython.native
     def stop(self) -> None:
@@ -110,7 +146,8 @@ class Motor:
             frequency: int
         """
         self.frequencyF.seek(0)
-        return int(self.frequencyF.read()) * self.dir
+        self.lastFrequency = self.frequencyF.read() or self._lastFrequency
+        return int(self.lastFrequency) * self.dir
 
     # @micropython.native
     def dutyCycle(self, dutyCycle: int) -> None:
@@ -162,7 +199,7 @@ class Motor:
             self.dutyCycle(duty)
 
             loopT = time()
-            while time() - loopT < 0.25:
+            while time() - loopT < 0.5:
 
                 times.append(time() - st)
                 speeds.append(self.frequency() / 2)
@@ -200,6 +237,20 @@ class Motor:
 
         return _dutys, _speed, acc
 
+    # @micropython.native
+    def connected(self) -> bool:
+        """
+        Returns if the motor is connected.
+        Returns:
+            connected: bool
+        """
+        try:
+            with open("/sys/class/tacho-motor/motor"+self._portProps[1]+"/address", 'r'):
+                pass
+            return True
+        except Exception:
+            return False
+
 
 class Gyro:
     """
@@ -212,6 +263,9 @@ class Gyro:
 
         self._port = micropython.const(config.port)
         self._portF = sensor_ports[self._port]
+
+        if not self.connected():
+            raise PortError(self._port)
 
         self.dir = config.direction
 
@@ -299,6 +353,20 @@ class Gyro:
         self.modeF.write(mode)
         self.modeF.flush()
 
+    # @micropython.native
+    def connected(self) -> bool:
+        """
+        Returns if the motor is connected.
+        Returns:
+            connected: bool
+        """
+        try:
+            with open("/sys/class/lego-sensor/sensor"+self._portF+"/address", 'r'):
+                pass
+            return True
+        except Exception:
+            return False
+
 
 class DualGyro(Gyro):
     """
@@ -313,7 +381,7 @@ class DualGyro(Gyro):
         self.gyro2 = Gyro(config2)
 
         for key, value in kwargs.items():
-            setattr(self, key, value)
+            setattr(self.gyro1, key, value); setattr(self.gyro2, key, value)
 
     # @micropython.native
     def getAngle(self) -> float:
@@ -354,6 +422,15 @@ class DualGyro(Gyro):
         self.gyro1.calibrate(angle)
         self.gyro2.calibrate(angle)
 
+        # @micropython.native
+    def connected(self) -> [bool, bool]:
+        """
+        Returns if the motor is connected.
+        Returns:
+            connected: bool
+        """
+        return self.gyro1.connected(), self.gyro2.connected()
+
 
 class LightSensor:
     """
@@ -366,6 +443,9 @@ class LightSensor:
 
         self._port = micropython.const(config.port)
         self._portF = sensor_ports[config.port]
+
+        if not self.connected():
+            raise PortError(self._port)
 
         self.valueF = open("/sys/class/lego-sensor/sensor"+self._portF+"/value0", 'r')
         self.modeF = open("/sys/class/lego-sensor/sensor"+self._portF+"/mode", 'w')
@@ -417,6 +497,20 @@ class LightSensor:
         self.modeF.write(mode)
         self.modeF.flush()
 
+    # @micropython.native
+    def connected(self) -> bool:
+        """
+        Returns if the motor is connected.
+        Returns:
+            connected: bool
+        """
+        try:
+            with open("/sys/class/lego-sensor/sensor"+self._portF+"/address", 'r'):
+                pass
+            return True
+        except Exception:
+            return False
+
 
 # @micropython.native
 def MotorPorts() -> None:
@@ -426,7 +520,7 @@ def MotorPorts() -> None:
     for dir in listdir("/sys/class/tacho-motor"):
         with open("/sys/class/tacho-motor/"+dir+"/address", 'r') as f:
             addr = f.read()
-        motor_ports[addr[13]][1] = dir[5]
+        motor_ports[addr[13]][1] = dir[5:]
 
 
 # @micropython.native
@@ -440,6 +534,24 @@ def SensorPorts() -> None:
         sensor_ports[addr[12]] = dir[6]
 
 
+# @micropython.native
+def chechConnected(port: str) -> bool:
+    if port[0] == 'S':
+        try:
+            with open("/sys/class/lego-sensor/sensor"+sensor_ports[port[1]]+"/address", 'r'):
+                return True
+        except Exception:
+            return False
+
+    else:
+        try:
+            with open("/sys/class/tacho-motor/motor"+motor_ports[port][1]+"/address", 'r'):
+                return True
+        except Exception:
+            return False
+
+
+# @micropython.native
 def startup() -> None:
     """
     Updates dicts of ports.
