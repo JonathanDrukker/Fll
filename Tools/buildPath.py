@@ -1,6 +1,5 @@
 from math import sin, cos, pi
 from json import loads
-import csv
 import os
 mainpath = os.path.dirname(os.getcwd())
 
@@ -103,6 +102,8 @@ for index, waypoint in enumerate(waypoints):
     segment.append(new_waypoint)
     new_waypoint = {}
 
+path.append(segment)
+
 # Stop Events
 
 stopEvents = {}
@@ -141,10 +142,9 @@ for marker in points["markers"]:
 with open(path_to_Wfile+".events", 'w') as f:
     f.write(str((stopEvents, markers)))
 
-with open(path_to_Wfile+".csv", 'w', newline='') as f:
-    w = csv.DictWriter(f, path[0][0].keys())
-    w.writeheader()
-    for segment in path:
-        for waypoint in segment:
-            w.writerow(waypoint)
-        f.write("\n")
+with open(path_to_Wfile+".path", 'w') as f:
+    tmp = [[] for _ in range(len(path))]
+    for index, spline in enumerate(path):
+        for waypoint in spline:
+            tmp[index].append(list(waypoint.values()))
+    f.write(str(tmp))
