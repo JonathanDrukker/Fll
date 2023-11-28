@@ -1,8 +1,8 @@
 import micropython
 from gc import collect
 from _thread import allocate_lock, start_new_thread
+from mytools import sleep, Timer
 from time import time
-from mytools import sleep
 from controllers import RAMSETEController
 from odometry import DiffrentialDriveOdometry
 from drivebase import DriveBase
@@ -28,7 +28,7 @@ class Runner:
         self.rm = Motor(config.motors.right)
 
     # @micropython.native
-    def path(self, path: str, b: float, zeta: float, _log: bool = False) -> [list, int]:
+    def path(self, filename: str, b: float, zeta: float, _log: bool = False) -> [list, int]:
         """
         Traverse a path.
         Handles events and markers.
@@ -44,34 +44,43 @@ class Runner:
         """
         counter = 0
 
-        st = time()
-        waypointsF = open("Paths/"+path+".cvs", "r")
-        print("File open time:", time()-st)
+        print("Loading Path..."); st = time()
+        with open("Paths/"+filename+".path", "r") as f:
+            path = eval(f.read())
+        print("Loaded path in", time()-st)
 
-        self.waypointsF.readline()
-        self.lastWaypoint = self.waypointsF.readline()
-
-        with open("Paths/"+path+".events", "r") as f:
+        with open("Paths/"+filename+".events", "r") as f:
             stopEvents, markers = eval(f.readline())
-        self.markersHandler(markers)
 
         logs = []
 
         RAMSETE = RAMSETEController(b, zeta, self.drivebase._halfDBM)
-        self.odometry.resetPos(self.lastWaypoint[1], self.lastWaypoint[2], self.lastWaypoint[3])
 
-        while True:
-            log, count = self.spline(waypointsF, RAMSETE, _log)
+        self.odometry.resetPos(path[0][0][1], path[0][0][2], path[0][0][3])
+        self.odometry.start()
+
+        self.timer = Timer()
+
+        for spline in path:
+
+            log, count = self.spline(spline, RAMSETE, _log)
+            self.timer.pause()
 
             counter += count
-            logs += log
+            logs.append(log)
 
-            self.stopEventsHandler(len(logs), stopEvents)
+            # self.stopEventsHandler(len(logs), stopEvents)
+
+            self.timer.play()
+
+        self.odometry.stop()
+
+        print("Finished path")
 
         return logs, counter
 
     # @micropython.native
-    def spline(self, waypointsFile: object, RAMSETE: RAMSETEController, _log: bool = False) -> [list, int, dict]:
+    def spline(self, path: list, RAMSETE: RAMSETEController, _log: bool = False) -> [list, int, dict]:
         """
         Traverse a spline.
         Parameters:
@@ -86,22 +95,17 @@ class Runner:
         collect()
         count = 0
 
-        self.lastWaypoint = self.getTargetWaypoint(0, waypointsFile)
+        if _log: log = []
+        else: log = None
 
-        if _log:
-            log = []
-        else:
-            log = None
-
-        startTime = time() - self.lastWaypoint[0]
-        cTime = 0.0
+        index = 0
 
         while True:
 
-            cTime = time() - startTime
-            waypoint = self.getTargetWaypointFromFile(cTime, waypointsFile)
-            if waypoint is None:
-                break
+            cTime = self.timer.get()
+
+            waypoint, index = self.getTargetWaypoint(cTime, path, index)
+            if waypoint is None: break
 
             currentX, currentY, currentTheata = self.odometry.getPos2d()
             Vx, Vy = waypoint[1] - currentX, waypoint[2] - currentY
@@ -109,12 +113,14 @@ class Runner:
             Vl, Vr = RAMSETE.correction(Vx, Vy, currentTheata,
                                         waypoint[4], waypoint[5], waypoint[3])
 
-            self.drivebase.run_tank(Vl, Vr, waypoint[6], waypoint[7])
+            self.drivebase.run_tankCM(Vl, Vr, waypoint[6], waypoint[7])
 
             if _log:
-                log.append((cTime, currentX, currentY, currentTheata, self.odometry.getPhi()))
+                log.append((cTime, currentX, currentY, currentTheata, self.drivebase.getSpeed(), Vl, Vr))
 
-        self.drivebase.run_tank(0, 0)
+            count += 1
+
+        self.drivebase.stop()
         return log, count
 
     # @micropython.native
@@ -165,21 +171,21 @@ class Runner:
                 exec(command)
 
     # @micropython.native
-    def getTargetWaypoint(self, cTime: float, file: object) -> dict:
+    def getTargetWaypoint(self, cTime: float, path: list, index: int) -> [list, int]:
         """
-        Get the target waypoint.
+        Get target waypoint.
         Parameters:
             cTime: float - Current time
-            file: object - File
+            path: list - Path
+            index: int - Index
         Returns:
-            waypoint: dict - Waypoint
+            waypoint: list - Waypoint
+            index: int - Index
         """
-        if cTime - self.lastWaypoint['time'] > 0:
-            return self.lastWaypoint
-        while True:
-            data = file.readline()
-            if data == '':
-                return None
-            if int(data[:data.index(',')]) - cTime > 0:
-                self.lastWaypoint = eval(data)
-                return self.lastWaypoint
+        for waypoint in path[index:]:
+            if waypoint[0] > cTime:
+                return waypoint, index
+            index += 1
+
+        else:
+            return None, index
