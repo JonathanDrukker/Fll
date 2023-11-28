@@ -63,13 +63,15 @@ class Runner:
 
         for spline in path:
 
+            self.markersHandler(markers[len(logs)])
+
             log, count = self.spline(spline, RAMSETE, _log)
             self.timer.pause()
 
             counter += count
             logs.append(log)
 
-            # self.stopEventsHandler(len(logs), stopEvents)
+            self.stopEventsHandler(stopEvents[len(logs)-1])
 
             self.timer.play()
 
@@ -124,7 +126,7 @@ class Runner:
         return log, count
 
     # @micropython.native
-    async def stopEventsHandler(self, stopEvent: dict) -> None:
+    def stopEventsHandler(self, stopEvent: dict) -> None:
         """
         Handle stop events.
         Parameters:
@@ -139,21 +141,22 @@ class Runner:
             self.commands(stopEvent["commands"], stopEvent["execBehavior"])
             sleep(stopEvent["waitTime"])
         elif stopEvent["waitBehavior"] == "Minimum":
-            await self.commands(stopEvent["commands"], stopEvent["execBehavior"])
-            await sleep(stopEvent["waitTime"])
+            st = time()
+            self.commands(stopEvent["commands"], stopEvent["execBehavior"])
+            sleep(stopEvent["waitTime"]-(time()-st))
 
     # @micropython.native
-    def markersHandler(self, markers: tuple, cTime: float) -> None:
+    def markersHandler(self, markers: tuple) -> None:
         """
         Handle markers.
         Parameters:
             markers: tuple - Markers
             cTime: float - Current time
         """
-        sleep(markers[0] - cTime())
-        self.commands(markers[1], "Parallel")
-        self.markersHandler(markers[2:], cTime+markers[0])
-        # TODO: make not dumb solution
+        sleep(markers[0][0]-self.timer.get())
+        self.commands(markers[0][1], "Parallel")
+        if len(markers > 1):
+            self.markersHandler(markers[1:])
 
     # @micropython.native
     def commands(self, commands: list, execBehavior: str) -> None:
