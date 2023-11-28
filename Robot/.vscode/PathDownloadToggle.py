@@ -7,7 +7,7 @@ with open(settings_path, 'r') as f:
     settings = load(f)
 
 if "ev3devBrowser.download.exclude" not in settings or settings["ev3devBrowser.download.exclude"] == "**/.*":
-    settings["ev3devBrowser.download.exclude"] = "*paths.py*"
+    settings["ev3devBrowser.download.exclude"] = "*Paths/*"
 else:
     settings["ev3devBrowser.download.exclude"] = "**/.*"
 
