@@ -2,6 +2,7 @@ import micropython
 from _thread import LockType
 from math import sin, cos, radians
 from mytools import thread
+from math import degrees
 
 
 class DiffrentialDriveOdometry:
@@ -25,6 +26,7 @@ class DiffrentialDriveOdometry:
         self.theata = theata
 
         self.run = False
+        self._pos = None
 
         self.lm_phi, self.rm_phi = drivebase.getRot()
 
@@ -37,17 +39,18 @@ class DiffrentialDriveOdometry:
         self.run = True
 
         past_lm_pos, past_rm_pos = self.drivebase.getRot()
-        theata = self.theata
 
         while self.run:
 
-            self.lm_phi, self.rm_phi = self.drivebase.getRot()
+            lm_phi, rm_phi = self.drivebase.getRot()
 
-            Vl = self.lm_phi - past_lm_pos
-            Vr = self.rm_phi - past_rm_pos
+            Vl = lm_phi - past_lm_pos
+            Vr = rm_phi - past_rm_pos
 
             V = self.drivebase._wheelCircumference*(Vr + Vl)/2
             theata = radians(self.drivebase.gyro.getProcessedAngle())
+
+            print(theata)
 
             Vx = V*cos(theata)
             Vy = V*sin(theata)
@@ -57,7 +60,7 @@ class DiffrentialDriveOdometry:
                 self.y += Vy
                 self.theata = theata
 
-            past_lm_pos, past_rm_pos = self.lm_phi, self.rm_phi
+            past_lm_pos, past_rm_pos = lm_phi, rm_phi
 
     # @micropython.native
     def stop(self) -> None:
@@ -75,7 +78,7 @@ class DiffrentialDriveOdometry:
             y: float
             theata: float
         """
-        with self.drivebase.lock:
+        with self.lock:
             return self.x, self.y, self.theata
 
     # @micropython.native
@@ -87,18 +90,6 @@ class DiffrentialDriveOdometry:
             y: float
             theata: float
         """
-        with self.drivebase.lock:
+        self.drivebase.gyro.reset(degrees(theata))
+        with self.lock:
             self.x, self.y, self.theata = x, y, theata
-        self.drivebase.gyro.reset(theata)
-
-    # @micropython.native
-    def getPhi(self) -> [float, float]:
-        """
-        Returns the current angle of the robot.
-        Phi - the angle of the wheels.
-        Returns:
-            lm_phi: float
-            rm_phi: float
-        """
-        with self.drivebase.lock:
-            return self.lm_phi, self.rm_phi
