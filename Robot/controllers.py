@@ -119,17 +119,18 @@ class RAMSETEController:
         Ex = cosTheata*Vx + sinTheata*Vy
         Ey = cosTheata*Vy - sinTheata*Vx
 
-        Etheata = (theata_d - theata)
+        Etheata = theata_d - theata
         if (Etheata > pi): Etheata -= 2*pi
         elif (Etheata < -pi): Etheata += 2*pi
-        elif (Etheata == 0): Etheata = 0.00001
 
         k = 2*self.zeta*sqrt(Omega**2 + self.b*V**2)
 
         v = V*cos(Etheata) + k*Ex
-        omega = (Omega + k*Etheata + (self.b*V*sin(Etheata)*Ey)/Etheata) * self.halfDBM
+        if (Etheata != 0):
+            Omega += k*Etheata + (self.b*V*sin(Etheata)*Ey)/Etheata
+        Omega *= self.halfDBM
 
-        return v - omega, v + omega
+        return v - Omega, v + Omega
 
     # @micropython.native
     def setGains(self, b: float, zeta: float) -> None:
