@@ -137,7 +137,10 @@ for marker in points["markers"]:
     spline_index = int(marker['position'])
     time = path[spline_index][int(round(marker['position'] - spline_index, 3) * (1/resolution))]['time']
 
-    markers[spline_index] = (time, commands)
+    if spline_index not in markers:
+        markers[spline_index] = [(time, commands)]
+    else:
+        markers[spline_index].append((time, commands))
 
 with open(path_to_Wfile+".events", 'w') as f:
     f.write(str((stopEvents, markers)))
