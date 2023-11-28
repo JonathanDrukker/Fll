@@ -69,12 +69,11 @@ class Motor:
     def update(self) -> None:
         """
         P controller for the motor speed.
-        Update time: 7.5ms.
+        Update time: 10ms.
         """
 
         self.runUpdate = True
-        while self.run:
-
+        while self.runUpdate:
             self.dutyCycle(self.speed_sp + self.Kp*(self.speed_sp - self.getSpeed()))
             sleep(0.01)
 
@@ -146,8 +145,10 @@ class Motor:
             frequency: int
         """
         self.frequencyF.seek(0)
-        self.lastFrequency = self.frequencyF.read() or self._lastFrequency
-        return int(self.lastFrequency) * self.dir
+        data = self.frequencyF.read()
+        if data.strip().lstrip("-").isdigit():
+            self._lastFrequency = data
+        return int(self._lastFrequency) * self.dir
 
     # @micropython.native
     def dutyCycle(self, dutyCycle: int) -> None:
@@ -159,10 +160,8 @@ class Motor:
             dutyCycle: int
         """
         self.dutyCycleF.seek(0)
-        if abs(dutyCycle) < 100:
-            self.dutyCycleF.write(str(int(dutyCycle)))
-        else:
-            self.dutyCycleF.write(str(int(copysign(100, dutyCycle))))
+        if abs(dutyCycle) <= 100: self.dutyCycleF.write(str(int(dutyCycle)))
+        else: self.dutyCycleF.write(str(int(copysign(100, dutyCycle))))
         self.dutyCycleF.flush()
 
     # @micropython.native
@@ -274,7 +273,7 @@ class Gyro:
 
         self.setMode()
 
-        self.bias = self.read()*self.dir + config.bias
+        self.bias = config.bias - self.read() * self.dir
 
         for key, value in kwargs.items():
             setattr(self, key, value)
@@ -318,7 +317,7 @@ class Gyro:
         Parameters:
             angle: float
         """
-        self.bias = self.read() + angle
+        self.bias = angle - self.read() * self.dir
 
     # @micropython.native
     def calibrate(self) -> None:
@@ -391,6 +390,15 @@ class DualGyro(Gyro):
             angle: float
         """
         return (self.gyro1.getAngle() + self.gyro2.getAngle()) / 2
+
+    # @micropython.native
+    def getProcessedAngle(self) -> float:
+        """
+        Returns the angle of the gyro in degrees.
+        Returns:
+            angle: float - [0, 360]
+        """
+        return (self.gyro1.getProcessedAngle() + self.gyro2.getProcessedAngle()) / 2
 
     # @micropython.native
     def getRate(self) -> float:
