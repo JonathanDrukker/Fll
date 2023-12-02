@@ -49,7 +49,7 @@ class Motor(_Motor):
             error = 1
             while error != 0 and time() - st < timeout:
                 error = angle - self.getAngle()
-                self.run(PID.correction(None, error) + copysign(speed, error))
+                self.runImmediate(PID.correction(None, error) + copysign(speed, error))
 
             self.stop()
 
@@ -82,7 +82,7 @@ class Motor(_Motor):
         """
         # @micropython.native
         def main(speed: float, time: float):
-            self.run(speed)
+            self.runImmediate(speed)
             sleep(time)
             self.stop()
 
