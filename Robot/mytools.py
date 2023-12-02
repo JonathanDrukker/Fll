@@ -41,7 +41,7 @@ async def sleep(time: float):
 class Timer:
     def __init__(self):
         self.st = _time()
-        self.pt = None
+        self.pt = _time()
 
     # @micropython.native
     def get(self):
