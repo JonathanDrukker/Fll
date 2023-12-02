@@ -44,9 +44,9 @@ class Motor:
         self.speed_sp = 0
         self._maxSpeed = micropython.const(config.maxSpeed)
 
-        self.Kp = config.p
+        self.Kp = micropython.const(config.p)
 
-        self.Ks, self.Kv, self.Ka = config.ff
+        self.Ks, self.Kv, self.Ka = micropython.const(config.ff)
 
         self._lastFrequency = 0
 

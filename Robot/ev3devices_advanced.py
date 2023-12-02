@@ -22,8 +22,8 @@ class Motor(_Motor):
 
         super().__init__(config)
 
-        self.speedKpid = config.speedKpid
-        self.posKpid = config.posKpid
+        self.speedKpid = micropython.const(config.speedKpid)
+        self.posKpid = micropython.const(config.posKpid)
 
     # @micropython.native
     def TurnABS(self, angle: float, Kpid: [float, float, float] = None, speed: float = 0,
