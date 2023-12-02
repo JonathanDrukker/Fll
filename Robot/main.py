@@ -1,5 +1,6 @@
 #!/home/robot/Robot/micropython
 
+import micropython; micropython.opt_level(3)
 from runner import Runner
 from config import config
 
