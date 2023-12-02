@@ -1,0 +1,101 @@
+{
+    "robot": {
+        "width": 13.5,
+        "length": 16.5,
+        "wheelAxis": 5.8
+    },
+    "wheel": {
+        "radius": 4.075,
+        "diameter": 8.15,
+        "circumference": 25.603980126756814,
+        "width": 1.5
+    },
+    "drivebase": {
+        "DBM": 9.7,
+        "halfDBM": 4.85,
+        "motor": {
+            "left": {
+                "port": "D",
+                "direction": 1,
+                "bias": 0,
+                "maxSpeed": 701.5,
+                "ff": [
+                    18,
+                    0.15412,
+                    -1.634e-05
+                ],
+                "p": 0.06
+            },
+            "right": {
+                "port": "C",
+                "direction": 1,
+                "bias": 0,
+                "maxSpeed": 728.0,
+                "ff": [
+                    15,
+                    0.14773,
+                    1.9937e-05
+                ],
+                "p": 0.04
+            }
+        }
+    },
+    "motors": {
+        "left": {
+            "port": "A",
+            "direction": 1,
+            "bias": 0,
+            "maxSpeed": 0.0,
+            "ff": [
+                0,
+                0,
+                0
+            ],
+            "p": 0.06,
+            "speedKpid": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "posKpid": [
+                0.0,
+                0.0,
+                0.0
+            ]
+        },
+        "right": {
+            "port": "B",
+            "direction": 1,
+            "bias": 0,
+            "maxSpeed": 0.0,
+            "ff": [
+                0,
+                0,
+                0
+            ],
+            "p": 0.06,
+            "speedKpid": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "posKpid": [
+                0.0,
+                0.0,
+                0.0
+            ]
+        }
+    },
+    "gyro": {
+        "S1": {
+            "port": "3",
+            "direction": -1,
+            "bias": 0
+        },
+        "S2": {
+            "port": "4",
+            "direction": -1,
+            "bias": 0
+        }
+    }
+}
