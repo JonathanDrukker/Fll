@@ -85,10 +85,23 @@ class Motor:
         self.runUpdate = False
 
     # @micropython.native
+    def runImmediate(self, speed: float = 0, acc: float = 0) -> None:
+        """
+        Runs the motor at a given speed and acceleration.
+        Does not use the ff values to calculate the duty cycle.
+        Parameters:
+            speed: float
+            acc: float
+        """
+        self.speed_sp = copysign(self.Ks, speed) + self.Kv*speed + self.Ka*acc
+        self.dutyCycle(self.speed_sp + self.Kp*(self.speed_sp - self.getSpeed()))
+
+    # @micropython.native
     def stop(self) -> None:
         """
         Stops the motor.
         """
+        self.speed_sp = 0
         self.dutyCycle(0)
 
     # @micropython.native
