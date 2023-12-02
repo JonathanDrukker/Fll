@@ -1,8 +1,8 @@
 import micropython
 from gc import collect
 from _thread import allocate_lock, start_new_thread
-from mytools import sleep, Timer
-from time import time
+from mytools import thread, Timer
+from time import time, sleep
 from controllers import RAMSETEController
 from odometry import DiffrentialDriveOdometry
 from drivebase import DriveBase
@@ -59,19 +59,21 @@ class Runner:
         self.odometry.resetPos(path[0][0][1], path[0][0][2], path[0][0][3])
         self.odometry.start()
 
+        self.stopEventsHandler(stopEvents[0])
+
         self.timer = Timer()
 
-        for spline in path:
+        for index, spline in enumerate(path):
 
-            self.markersHandler(markers[len(logs)])
+            self.markersHandler(markers[index])
 
             log, count = self.spline(spline, RAMSETE, _log)
             self.timer.pause()
 
+            self.stopEventsHandler(stopEvents[index+1])
+
             counter += count
             logs.append(log)
-
-            self.stopEventsHandler(stopEvents[len(logs)-1])
 
             self.timer.play()
 
@@ -132,30 +134,33 @@ class Runner:
         Parameters:
             stopEvent: dict - Stop event
         """
-        if stopEvent["waitBehavior"] == "None":
-            self.commands(stopEvent["commands"], stopEvent["execBehavior"])
-        elif stopEvent["waitBehavior"] == "Before":
+        if stopEvent["waitBehavior"] == "none":
+            self.commands(stopEvent["commands"], stopEvent["executionBehavior"])
+        elif stopEvent["waitBehavior"] == "before":
             sleep(stopEvent["waitTime"])
-            self.commands(stopEvent["commands"], stopEvent["execBehavior"])
-        elif stopEvent["waitBehavior"] == "After":
-            self.commands(stopEvent["commands"], stopEvent["execBehavior"])
+            self.commands(stopEvent["commands"], stopEvent["executionBehavior"])
+        elif stopEvent["waitBehavior"] == "after":
+            self.commands(stopEvent["commands"], stopEvent["executionBehavior"])
             sleep(stopEvent["waitTime"])
-        elif stopEvent["waitBehavior"] == "Minimum":
+        elif stopEvent["waitBehavior"] == "minimum":
             st = time()
-            self.commands(stopEvent["commands"], stopEvent["execBehavior"])
-            sleep(stopEvent["waitTime"]-(time()-st))
+            self.commands(stopEvent["commands"], stopEvent["executionBehavior"])
+            dt = stopEvent["waitTime"]-(time()-st)
+            if dt > 0: sleep(dt)
 
     # @micropython.native
-    def markersHandler(self, markers: tuple) -> None:
+    @thread
+    def markersHandler(self, markers: list) -> None:
         """
         Handle markers.
         Parameters:
             markers: tuple - Markers
             cTime: float - Current time
         """
-        sleep(markers[0][0]-self.timer.get())
-        self.commands(markers[0][1], "Parallel")
-        if len(markers > 1):
+        if len(markers) > 0:
+            dt = markers[0][0]-self.timer.get()
+            if dt > 0: sleep(dt)
+            self.commands(markers[0][1], "parallel")
             self.markersHandler(markers[1:])
 
     # @micropython.native
@@ -166,12 +171,12 @@ class Runner:
             commands: list - Commands
             execBehavior: str - Execution behavior
         """
-        if execBehavior == "Parallel":
+        if execBehavior == "parallel":
             for command in commands:
-                start_new_thread(exec, (command))
-        else:
+                start_new_thread(eval, (command,))
+        elif execBehavior == "sequential":
             for command in commands:
-                exec(command)
+                eval(command)
 
     # @micropython.native
     def getTargetWaypoint(self, cTime: float, path: list, index: int) -> [list, int]:
