@@ -10,7 +10,7 @@ path_to_JSON = mainpath + f'\FLL\deploy\pathplanner\generatedJSON\{filename}.wpi
 path_to_Rfile = mainpath + f'\FLL\deploy\pathplanner\{filename}.path'
 path_to_Wfile = mainpath + f'\FLL\Robot\Paths\{filename}'
 
-resolution = 0.001
+resolution = 0.004
 unitsScale = 100
 
 with open("Robot/config.json", "r") as f:
@@ -106,10 +106,9 @@ path.append(segment)
 
 # Stop Events
 
-stopEvents = {}
-count = 0
+stopEvents = []
 for index, point in enumerate(points["waypoints"]):
-    if point["isStopPoint"] or point["isReversal"]:
+    if point["isStopPoint"] or point["isReversal"] or index == 0 or index == len(points["waypoints"])-1:
 
         commands = []
         for _index, i in enumerate(point["stopEvent"]["names"][::2]):
@@ -120,14 +119,12 @@ for index, point in enumerate(points["waypoints"]):
         waitTime = point["stopEvent"]["waitTime"]
         waitBehavior = point["stopEvent"]["waitBehavior"]
 
-        stopEvents[index-count] = {"commands": commands, "executionBehavior": executionBehavior,
-                                   "waitTime": waitTime, "waitBehavior": waitBehavior}
-    else:
-        count += 1
+        stopEvents.append({"commands": commands, "executionBehavior": executionBehavior,
+                           "waitTime": waitTime, "waitBehavior": waitBehavior})
 
 # Markers
 
-markers = {}
+markers = [[] for _ in range(len(stopEvents))]
 for marker in points["markers"]:
 
     commands = []
@@ -137,10 +134,7 @@ for marker in points["markers"]:
     spline_index = int(marker['position'])
     time = path[spline_index][int(round(marker['position'] - spline_index, 3) * (1/resolution))]['time']
 
-    if spline_index not in markers:
-        markers[spline_index] = [(time, commands)]
-    else:
-        markers[spline_index].append((time, commands))
+    markers[spline_index].append((time, commands))
 
 with open(path_to_Wfile+".events", 'w') as f:
     f.write(str((stopEvents, markers)))
