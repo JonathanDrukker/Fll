@@ -1,15 +1,19 @@
 #!/home/robot/Robot/micropython
 
-from paths import path_1
 from runner import Runner
 from config import config
 
 print("Starting...")
 
 runner = Runner(config())
-runner.odometry.start()
 
-log, count = runner.path(path_1, 0.01, 0.5, 0, True)
+runner.drivebase.update()
+
+log, count = runner.path('6', 0.01, 0.4, True)
+
+runner.drivebase.stopUpdate()
+
+print("Count:", count)
 
 with open('runtime.log', 'w') as f:
     f.write(str(log))
