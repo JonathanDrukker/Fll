@@ -50,8 +50,6 @@ class DiffrentialDriveOdometry:
             V = self.drivebase._wheelCircumference*(Vr + Vl)/2
             theata = radians(self.drivebase.gyro.getProcessedAngle())
 
-            print(theata)
-
             Vx = V*cos(theata)
             Vy = V*sin(theata)
 
