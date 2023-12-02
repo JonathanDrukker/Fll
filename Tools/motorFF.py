@@ -3,7 +3,8 @@ import numpy as np
 
 print('Starting...')
 
-pathToFile = 'Data/Analysis/rightAnalysis.log'
+pathToFile = 'Data/Analysis/analysis.log'
+# pathToFile = 'Data/Analysis/rightAnalysis.log'
 # pathToFile = 'Data/Analysis/leftAnalysis.log' # noqa
 
 with open(pathToFile, 'r') as f:
