@@ -1,8 +1,7 @@
 import micropython
 from _thread import LockType
-from math import sin, cos, radians
+from math import sin, cos, radians, degrees
 from mytools import thread
-from math import degrees
 
 
 class DiffrentialDriveOdometry:
@@ -26,11 +25,8 @@ class DiffrentialDriveOdometry:
         self.theata = theata
 
         self.run = False
-        self._pos = None
 
-        self.lm_phi, self.rm_phi = drivebase.getRot()
-
-    # @micropython.native
+    @micropython.native
     @thread
     def start(self) -> None:
         """
@@ -60,14 +56,14 @@ class DiffrentialDriveOdometry:
 
             past_lm_pos, past_rm_pos = lm_phi, rm_phi
 
-    # @micropython.native
+    @micropython.native
     def stop(self) -> None:
         """
         Stops the odometry thread.
         """
         self.run = False
 
-    # @micropython.native
+    @micropython.native
     def getPos2d(self) -> [float, float, float]:
         """
         Returns the current position of the robot.
@@ -79,7 +75,7 @@ class DiffrentialDriveOdometry:
         with self.lock:
             return self.x, self.y, self.theata
 
-    # @micropython.native
+    @micropython.native
     def resetPos(self, x: float = 0, y: float = 0, theata: float = 0) -> None:
         """
         Resets the position of the robot.
