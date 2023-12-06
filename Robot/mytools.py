@@ -1,10 +1,9 @@
 import micropython
 from _thread import start_new_thread
 from time import time as _time
-from time import sleep as _sleep
 
 
-# @micropython.native
+@micropython.native
 def mean(*args: float) -> float:
     """
     This function returns the mean of the given numbers.
@@ -15,7 +14,7 @@ def mean(*args: float) -> float:
     return sum(args)/len(args)
 
 
-# @micropython.native
+@micropython.native
 def thread(func):
     """
     This decorator return the given function as a thread.
@@ -28,14 +27,23 @@ def thread(func):
     return wrapper
 
 
-# @micropython.native
-async def sleep(time: float):
+@micropython.native
+def sign(x: float) -> int:
     """
-    This function sleeps for the given time.
+    This is a sign function.
+    Returns -1 if x<0, 0 if x=0, 1 if x>0
+    Parameters: x: float
+    Returns: y
+    """
+    if x == 0:
+        return x
+    else:
+        return x/abs(x)
 
-    Parameters: time: float - Time
-    """
-    _sleep(time)
+
+@micropython.native
+def between(x: float, y: float, z: float):
+    return abs(y-x) < z
 
 
 class Timer:
@@ -43,19 +51,31 @@ class Timer:
         self.st = _time()
         self.pt = _time()
 
-    # @micropython.native
+    @micropython.native
     def get(self):
+        """
+        Return current time.
+        """
         return _time() - self.st
 
-    # @micropython.native
+    @micropython.native
     def reset(self):
+        """
+        Resets timer.
+        """
         self.st = _time()
 
-    # @micropython.native
+    @micropython.native
     def pause(self):
+        """
+        Pauses timer.
+        """
         self.pt = _time()
 
-    # @micropython.native
+    @micropython.native
     def play(self):
+        """
+        Plays/Unpauses timer.
+        """
         self.st += _time() - self.pt
         self.pt = None
