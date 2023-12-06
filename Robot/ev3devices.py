@@ -2,7 +2,7 @@ import micropython
 from os import listdir
 from time import time, sleep
 from math import copysign
-from mytools import thread
+from mytools import thread, sign
 
 
 motor_ports = {'A': ['0', None], 'B': ['1', None], 'C': ['2', None], 'D': ['3', None]}
@@ -30,7 +30,7 @@ class Motor:
         if not self.connected():
             raise PortError(self._port)
 
-        self.dir = config.direction
+        self.dir = micropython.const(config.direction)
 
         self.countF = open("/sys/bus/iio/devices/iio:device1/in_count"+self._portProps[0]+"_raw", 'r')
         self.frequencyF = open("/sys/bus/iio/devices/iio:device1/in_frequency"+self._portProps[0]+"_input", 'r')
@@ -42,10 +42,8 @@ class Motor:
         self.bias = config.bias
 
         self.speed_sp = 0
-        self._maxSpeed = micropython.const(config.maxSpeed)
 
         self.Kp = micropython.const(config.p)
-
         self.Ks, self.Kv, self.Ka = micropython.const(config.ff)
 
         self._lastFrequency = 0
@@ -53,7 +51,7 @@ class Motor:
         for key, value in kwargs.items():
             setattr(self, key, value)
 
-    # @micropython.native
+    @micropython.native
     def run(self, speed: float = 0, acc: float = 0) -> None:
         """
         Runs the motor at a given speed and acceleration.
@@ -62,9 +60,9 @@ class Motor:
             speed: float
             acc: float
         """
-        self.speed_sp = copysign(self.Ks, speed) + self.Kv*speed + self.Ka*acc
+        self.speed_sp = self.Ks*sign(speed) + self.Kv*speed + self.Ka*acc
 
-    # @micropython.native
+    @micropython.native
     @thread
     def update(self) -> None:
         """
@@ -77,14 +75,14 @@ class Motor:
             self.dutyCycle(self.speed_sp + self.Kp*(self.speed_sp - self.getSpeed()))
             sleep(0.01)
 
-    # @micropython.native
+    @micropython.native
     def stopUpdate(self) -> None:
         """
         Stops the PID controller.
         """
         self.runUpdate = False
 
-    # @micropython.native
+    @micropython.native
     def runImmediate(self, speed: float = 0, acc: float = 0) -> None:
         """
         Runs the motor at a given speed and acceleration.
@@ -93,10 +91,10 @@ class Motor:
             speed: float
             acc: float
         """
-        self.speed_sp = copysign(self.Ks, speed) + self.Kv*speed + self.Ka*acc
-        self.dutyCycle(self.speed_sp + self.Kp*(self.speed_sp - self.getSpeed()))
+        speed_sp = self.Ks*sign(speed) + self.Kv*speed + self.Ka*acc
+        self.dutyCycle(speed_sp + self.Kp*(speed_sp - self.getSpeed()))
 
-    # @micropython.native
+    @micropython.native
     def stop(self) -> None:
         """
         Stops the motor.
@@ -104,7 +102,7 @@ class Motor:
         self.speed_sp = 0
         self.dutyCycle(0)
 
-    # @micropython.native
+    @micropython.native
     def getAngle(self) -> float:
         """
         Returns the angle of the motor in degrees.
@@ -113,7 +111,7 @@ class Motor:
         """
         return self.count() / 2 + self.bias
 
-    # @micropython.native
+    @micropython.native
     def getRot(self) -> float:
         """
         Returns the rotation of the motor in rotations(1Rot = 360Deg).
@@ -122,7 +120,7 @@ class Motor:
         """
         return self.getAngle() / 360
 
-    # @micropython.native
+    @micropython.native
     def getSpeed(self) -> float:
         """
         Returns the speed of the motor in degrees per second.
@@ -131,16 +129,16 @@ class Motor:
         """
         return self.frequency() / 2
 
-    # @micropython.native
+    @micropython.native
     def reset(self, bias: float = 0) -> None:
         """
         Resets the angle of the motor.
         Parameters:
             bias: float
         """
-        self.bias = self.count() / 2 + bias
+        self.bias = bias - self.count() / 2
 
-    # @micropython.native
+    @micropython.native
     def count(self) -> int:
         """
         Returns the count of the motor.
@@ -150,7 +148,7 @@ class Motor:
         self.countF.seek(0)
         return int(self.countF.read()) * self.dir
 
-    # @micropython.native
+    @micropython.native
     def frequency(self) -> int:
         """
         Returns the frequency of the motor.
@@ -163,7 +161,7 @@ class Motor:
             self._lastFrequency = data
         return int(self._lastFrequency) * self.dir
 
-    # @micropython.native
+    @micropython.native
     def dutyCycle(self, dutyCycle: int) -> None:
         """
         Sets the duty cycle of the motor.
@@ -177,7 +175,7 @@ class Motor:
         else: self.dutyCycleF.write(str(int(copysign(100, dutyCycle))))
         self.dutyCycleF.flush()
 
-    # @micropython.native
+    @micropython.native
     def setCommand(self, command: str = "run-direct"):
         """
         Sets the command of the motor.
@@ -188,7 +186,7 @@ class Motor:
         self.commandF.write(command)
         self.commandF.flush()
 
-    # @micropython.native
+    @micropython.native
     def analysis(self, save: bool = True, filename: str = 'analysis.log') -> tuple:
         """
         Returns the analysis of the motor.
@@ -249,7 +247,7 @@ class Motor:
 
         return _dutys, _speed, acc
 
-    # @micropython.native
+    @micropython.native
     def connected(self) -> bool:
         """
         Returns if the motor is connected.
@@ -258,8 +256,7 @@ class Motor:
         """
         try:
             with open("/sys/class/tacho-motor/motor"+self._portProps[1]+"/address", 'r'):
-                pass
-            return True
+                return True
         except Exception:
             return False
 
@@ -286,19 +283,19 @@ class Gyro:
 
         self.setMode()
 
-        self.bias = config.bias - self.read() * self.dir
+        self.bias = config.bias - self.read()
 
         for key, value in kwargs.items():
             setattr(self, key, value)
 
-    # @micropython.native
+    @micropython.native
     def getAngle(self) -> float:
         """
         Returns the angle of the gyro in degrees.
         Returns:
             angle: float
         """
-        return self.read() * self.dir + self.bias
+        return self.read() + self.bias
 
     def getProcessedAngle(self) -> float:
         """
@@ -311,7 +308,7 @@ class Gyro:
             angle += 360
         return angle
 
-    # @micropython.native
+    @micropython.native
     def getSpeed(self) -> float:
         """
         Returns the speed of the gyro in degrees per second.
@@ -319,20 +316,20 @@ class Gyro:
             speed: float
         """
         self.setMode("GYRO-RATE")
-        val = self.read() * self.dir
+        val = self.read()
         self.setMode("GYRO-ANG")
         return val
 
-    # @micropython.native
+    @micropython.native
     def reset(self, angle: float = 0) -> None:
         """
         Resets the angle of the gyro.
         Parameters:
             angle: float
         """
-        self.bias = angle - self.read() * self.dir
+        self.bias = angle - self.read()
 
-    # @micropython.native
+    @micropython.native
     def calibrate(self) -> None:
         """
         Calibrates the gyro.
@@ -344,7 +341,7 @@ class Gyro:
         sleep(2)
         self.setMode("GYRO-ANG")
 
-    # @micropython.native
+    @micropython.native
     def read(self) -> int:
         """
         Returns the value currently reading.
@@ -352,9 +349,9 @@ class Gyro:
             value: int
         """
         self.valueF.seek(0)
-        return int(self.valueF.read())
+        return int(self.valueF.read()) * self.dir
 
-    # @micropython.native
+    @micropython.native
     def setMode(self, mode: str = "GYRO-ANG") -> None:
         """
         Sets the mode of the gyro.
@@ -365,7 +362,7 @@ class Gyro:
         self.modeF.write(mode)
         self.modeF.flush()
 
-    # @micropython.native
+    @micropython.native
     def connected(self) -> bool:
         """
         Returns if the motor is connected.
@@ -374,8 +371,7 @@ class Gyro:
         """
         try:
             with open("/sys/class/lego-sensor/sensor"+self._portF+"/address", 'r'):
-                pass
-            return True
+                return True
         except Exception:
             return False
 
@@ -395,7 +391,7 @@ class DualGyro(Gyro):
         for key, value in kwargs.items():
             setattr(self.gyro1, key, value); setattr(self.gyro2, key, value)
 
-    # @micropython.native
+    @micropython.native
     def getAngle(self) -> float:
         """
         Returns the angle of the gyro in degrees.
@@ -404,7 +400,7 @@ class DualGyro(Gyro):
         """
         return (self.gyro1.getAngle() + self.gyro2.getAngle()) / 2
 
-    # @micropython.native
+    @micropython.native
     def getProcessedAngle(self) -> float:
         """
         Returns the angle of the gyro in degrees.
@@ -413,7 +409,7 @@ class DualGyro(Gyro):
         """
         return (self.gyro1.getProcessedAngle() + self.gyro2.getProcessedAngle()) / 2
 
-    # @micropython.native
+    @micropython.native
     def getRate(self) -> float:
         """
         Returns the speed of the gyro in degrees per second.
@@ -422,7 +418,7 @@ class DualGyro(Gyro):
         """
         return (self.gyro1.getRate() + self.gyro2.getRate()) / 2
 
-    # @micropython.native
+    @micropython.native
     def reset(self, angle: int = 0) -> None:
         """
         Resets the angle of the gyro.
@@ -432,7 +428,7 @@ class DualGyro(Gyro):
         self.gyro1.reset(angle)
         self.gyro2.reset(angle)
 
-    # @micropython.native
+    @micropython.native
     def calibrate(self, angle: int = 0) -> None:
         """
         Calibrates the gyro.
@@ -443,7 +439,7 @@ class DualGyro(Gyro):
         self.gyro1.calibrate(angle)
         self.gyro2.calibrate(angle)
 
-        # @micropython.native
+    @micropython.native
     def connected(self) -> [bool, bool]:
         """
         Returns if the motor is connected.
@@ -476,7 +472,7 @@ class LightSensor:
         for key, value in kwargs.items():
             setattr(self, key, value)
 
-    # @micropython.native
+    @micropython.native
     def getReflect(self) -> int:
         """
         Returns the reflectivity of the light sensor.
@@ -485,7 +481,7 @@ class LightSensor:
         """
         return self.read()
 
-    # @micropython.native
+    @micropython.native
     def getColor(self) -> int:
         """
         Returns the color of the light sensor.
@@ -497,7 +493,7 @@ class LightSensor:
         self.setMode("COL-REFLECT")
         return val
 
-    # @micropython.native
+    @micropython.native
     def read(self) -> int:
         """
         Returns the value currently reading.
@@ -507,7 +503,7 @@ class LightSensor:
         self.valueF.seek(0)
         return int(self.valueF.read())
 
-    # @micropython.native
+    @micropython.native
     def setMode(self, mode: str = "COL-REFLECT") -> None:
         """
         Sets the mode of the light sensor.
@@ -518,7 +514,7 @@ class LightSensor:
         self.modeF.write(mode)
         self.modeF.flush()
 
-    # @micropython.native
+    @micropython.native
     def connected(self) -> bool:
         """
         Returns if the motor is connected.
@@ -527,13 +523,12 @@ class LightSensor:
         """
         try:
             with open("/sys/class/lego-sensor/sensor"+self._portF+"/address", 'r'):
-                pass
-            return True
+                return True
         except Exception:
             return False
 
 
-# @micropython.native
+@micropython.native
 def MotorPorts() -> None:
     """
     Updates dict of motor ports.
@@ -544,7 +539,7 @@ def MotorPorts() -> None:
         motor_ports[addr[13]][1] = dir[5:]
 
 
-# @micropython.native
+@micropython.native
 def SensorPorts() -> None:
     """
     Updates dict of sensor ports.
@@ -555,24 +550,7 @@ def SensorPorts() -> None:
         sensor_ports[addr[12]] = dir[6]
 
 
-# @micropython.native
-def chechConnected(port: str) -> bool:
-    if port[0] == 'S':
-        try:
-            with open("/sys/class/lego-sensor/sensor"+sensor_ports[port[1]]+"/address", 'r'):
-                return True
-        except Exception:
-            return False
-
-    else:
-        try:
-            with open("/sys/class/tacho-motor/motor"+motor_ports[port][1]+"/address", 'r'):
-                return True
-        except Exception:
-            return False
-
-
-# @micropython.native
+@micropython.native
 def startup() -> None:
     """
     Updates dicts of ports.
