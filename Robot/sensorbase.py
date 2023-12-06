@@ -15,14 +15,14 @@ class Sensorbase:
         drivebase: object
     """
 
-    def __init__(self, lLight: str, rLight: str, drivebase: object):
+    def __init__(self, light: object, drivebase: object):
 
-        self.ll = LightSensor(lLight)
-        self.rl = LightSensor(rLight)
+        self.ll = LightSensor(light.SL)
+        self.rl = LightSensor(light.SR)
 
         self.drivebase = drivebase
 
-    # @micropython.native
+    @micropython.native
     def Drive(self, speed: float, dist: float, target: float,
               Kp: float, Ki: float, Kd: float, timeout: float = 60) -> None:
         """
@@ -48,7 +48,7 @@ class Sensorbase:
 
             self.drivebase.run_tank(speed+correction, speed-correction)
 
-    # @micropython.native
+    @micropython.native
     def Turn(self, speed: float, angle: float, target: float,
              Kp: float, Ki: float, Kd: float, timeout: float = 60) -> None:
         """
@@ -73,7 +73,7 @@ class Sensorbase:
 
             self.drivebase.run_tank(speed+correction, -speed-correction)
 
-    # @micropython.native
+    @micropython.native
     def LineFollow(self, speed: float, dist: float, rfl: int, side: int,
                    Kp: float, Ki: float, Kd: float, timeout: float = 60) -> None:
         """
@@ -103,7 +103,7 @@ class Sensorbase:
             corr = PID.correction(cl.getReflectedLight())
             self.drivebase.run_tank(speed + corr, speed - corr)
 
-    # @micropython.native
+    @micropython.native
     def Box(self, speed: int, rfl: int, Kp: float, Ki: float, Kd: float, timeout: float = 60) -> None:
         """
         Used to follow a line with the drivebase using light sensors and the gyro.
