@@ -3,7 +3,7 @@ from ev3devices import Motor as _Motor
 from controllers import PIDController
 from math import copysign
 from time import time, sleep
-from mytools import thread
+from mytools import thread, between
 
 
 class Motor(_Motor):
@@ -25,9 +25,9 @@ class Motor(_Motor):
         self.speedKpid = micropython.const(config.speedKpid)
         self.posKpid = micropython.const(config.posKpid)
 
-    # @micropython.native
+    @micropython.native
     def TurnABS(self, angle: float, Kpid: [float, float, float] = None, speed: float = 0,
-                timeout: float = 60, wait: bool = True):
+                timeout: float = 60, wait: bool = True, range: float = 1):
         """
         Turn the motor to a specific angle.
         Parameters:
@@ -36,31 +36,39 @@ class Motor(_Motor):
             speed: float
             timeout: float
             wait: bool
+            range: float
         """
-        # @micropython.native
-        def main(angle: float, Kp: float = None, Ki: float = None, Kd: float = None, speed: float = 0,
-                 timeout: float = 60):
+        @micropython.native
+        def main(self, angle: float, Kpid: [float, float, float] = None, speed: float = 0,
+                 timeout: float = 60, range: float = 1):
             if Kpid is None:
                 Kp, Ki, Kd = self.posKpid
-            PID = PIDController(Kp, Ki, Kd, angle)
+            PID = PIDController(Kp, Ki, Kd, angle, self.getAngle())
 
             st = time()
 
-            error = 1
+            error = angle - self.getAngle()
             while error != 0 and time() - st < timeout:
-                error = angle - self.getAngle()
-                self.runImmediate(PID.correction(None, error) + copysign(speed, error))
 
-            self.stop()
+                while not between(error, 0, range) and time() - st < timeout:
+                    error = angle - self.getAngle()
+                    tmp = PID.correction(None, error) + copysign(speed, error)
+                    print(error, tmp, PID.integral)
+                    self.runImmediate(tmp)
+
+                self.stop()
+
+                sleep(0.1)
+                error = angle - self.getAngle()
 
         if wait:
-            main(angle, Kpid, speed, timeout)
+            main(self, angle, Kpid, speed, timeout, range)
         else:
-            thread(main)(angle, Kpid, speed, timeout)
+            thread(main)(self, angle, Kpid, speed, timeout, range)
 
-    # @micropython.native
+    @micropython.native
     def Turn(self, angle: float, Kpid: [float, float, float] = None, speed: float = 0,
-             timeout: float = 60, wait: bool = True):
+             timeout: float = 60, wait: bool = True, range: float = 1):
         """
         Turn the motor by a specific angle.
         Parameters:
@@ -69,8 +77,9 @@ class Motor(_Motor):
             speed: float
             timeout: float
             wait: bool
+            range: float
         """
-        self.TurnABS(self.getAngle() + angle, Kpid, speed, timeout, wait)
+        self.TurnABS(self.getAngle() + angle, Kpid, speed, timeout, wait, range)
 
     def RunTime(self, speed: float, time: float, wait: bool = True):
         """
@@ -80,7 +89,7 @@ class Motor(_Motor):
             time: float
             wait: bool
         """
-        # @micropython.native
+        @micropython.native
         def main(speed: float, time: float):
             self.runImmediate(speed)
             sleep(time)
