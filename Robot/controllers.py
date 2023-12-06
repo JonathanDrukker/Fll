@@ -24,11 +24,11 @@ class PIDController:
         self.startTime = time()
         self.lastTime = 0.0
 
-        self.lastError = target-feedback
+        self.lastError = 0
 
         self.integral = 0.0
 
-    # @micropython.native
+    @micropython.native
     def correction(self, feedback: float, error: float = None) -> float:
         """
         Calculate the correction value
@@ -39,7 +39,7 @@ class PIDController:
             correction: float - Correction value
         """
 
-        if (error is None):
+        if error is None:
             error = self.target-feedback
 
         _time = time()
@@ -53,7 +53,7 @@ class PIDController:
 
         return correction
 
-    # @micropython.native
+    @micropython.native
     def calc_correction(self, error: float, dt: float) -> float:
         """
         Calculate the correction value
@@ -70,7 +70,7 @@ class PIDController:
 
         return self.Kp*p + self.Ki*self.integral + self.Kd*d
 
-    # @micropython.native
+    @micropython.native
     def setGains(self, Kp: float, Ki: float, Kd: float) -> None:
         """
         Set the gains
@@ -99,7 +99,7 @@ class RAMSETEController:
 
         self.halfDBM = micropython.const(halfDBM)
 
-    # @micropython.native
+    @micropython.native
     def correction(self, Vx: float, Vy: float, theata: float, V: float, Omega: float, theata_d: float) -> [float, float]:
         """
         Calculate the correction value
@@ -130,9 +130,9 @@ class RAMSETEController:
             Omega += k*Etheata + (self.b*V*sin(Etheata)*Ey)/Etheata
         Omega *= self.halfDBM
 
-        return v - Omega, v + Omega
+        return v + Omega, v - Omega
 
-    # @micropython.native
+    @micropython.native
     def setGains(self, b: float, zeta: float) -> None:
         """
         Set the gains
