@@ -5,7 +5,9 @@ print('Starting...')
 
 pathToFile = 'Data/Analysis/analysis.log'
 # pathToFile = 'Data/Analysis/rightAnalysis.log'
-# pathToFile = 'Data/Analysis/leftAnalysis.log' # noqa
+# pathToFile = 'Data/Analysis/leftAnalysis.log'
+
+drivemotors = False
 
 with open(pathToFile, 'r') as f:
     data = eval(f.read())
@@ -23,6 +25,11 @@ Ks = max(i for i, x in enumerate(data['velocity']) if x == 0)
 
 Kv = float("%.5g" % Kv)
 Ka = float("%.5g" % Ka)
+
+if drivemotors:
+    Ks /= 2
+    Kv /= 2
+    Ka /= 2
 
 print(Ks - 1, Kv, Ka, max(x1))
 print('Done!')
