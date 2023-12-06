@@ -1,4 +1,5 @@
 import json
+from micropython import const
 
 
 class JSONToClass:
@@ -10,7 +11,7 @@ class JSONToClass:
     def __init__(self, JSON: dict = None):
         for key, value in JSON.items():
             if isinstance(value, dict): setattr(self, key, JSONToClass(value))
-            else: setattr(self, key, value)
+            else: setattr(self, key, const(value))
 
 
 class config(JSONToClass):
