@@ -1,6 +1,5 @@
 import micropython
 from ev3devices import Motor, Gyro, DualGyro
-from mytools import thread
 
 
 class DriveBase:
