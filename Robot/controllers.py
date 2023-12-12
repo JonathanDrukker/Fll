@@ -21,8 +21,7 @@ class PIDController:
 
         self.target = target
 
-        self.startTime = time()
-        self.lastTime = 0.0
+        self.lastTime = time()
 
         self.lastError = 0
 
@@ -128,6 +127,8 @@ class RAMSETEController:
         v = V*cos(Etheata) + k*Ex
         if (Etheata != 0):
             Omega += k*Etheata + (self.b*V*sin(Etheata)*Ey)/Etheata
+        else:
+            Omega += self.b*V*Ey
         Omega *= self.halfDBM
 
         return v + Omega, v - Omega
