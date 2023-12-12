@@ -48,12 +48,11 @@ class Motor(_Motor):
             st = time()
 
             error = angle - self.getAngle()
-            while error != 0 and time() - st < timeout:
+            while not between(error, 0, range) and time() - st < timeout:
 
                 while not between(error, 0, range) and time() - st < timeout:
                     error = angle - self.getAngle()
                     tmp = PID.correction(None, error) + copysign(speed, error)
-                    print(error, tmp, PID.integral)
                     self.runImmediate(tmp)
 
                 self.stop()
