@@ -26,7 +26,7 @@ path = []
 segment = []
 new_waypoint = {}
 
-checkStopPoint = False
+StopPoint = False
 
 Vl, Vr = 0, 0
 
@@ -35,38 +35,39 @@ Vl, Vr = 0, 0
 for index, waypoint in enumerate(waypoints):
 
     if waypoint['velocity'] == 0 and len(segment) > 0:
-        if checkStopPoint:
+        if StopPoint:
             path.append(segment)
             segment = []
-            checkStopPoint = False
+            StopPoint = False
         else:
-            checkStopPoint = True
+            StopPoint = True
     else:
-        checkStopPoint = False
+        StopPoint = False
 
     # Time
     new_waypoint["time"] = waypoint["time"]
-
-    # Coords
-    x, y = waypoint['pose']['translation']['x']*unitsScale, waypoint['pose']['translation']['y']*unitsScale
-    l = config["robot"]["length"]/2 - config["robot"]["wheelAxis"]  # noqa
-    newX, newY = x + l*cos(waypoint['pose']['rotation']['radians']), y + l*sin(waypoint['pose']['rotation']['radians'])
-
-    new_waypoint["x"] = newX
-    new_waypoint["y"] = newY
 
     # Theata
     theata = waypoint['pose']['rotation']['radians']
     if (theata < 0):
         theata += 2*pi
+    theata = 2*pi - theata
     new_waypoint["theata"] = theata
+
+    # Coords
+    x, y = waypoint['pose']['translation']['x']*unitsScale, waypoint['pose']['translation']['y']*unitsScale
+    l = config["robot"]["length"]/2 - config["robot"]["wheelAxis"]  # noqa
+    newX, newY = x + l * cos(theata), y + l * sin(theata)
+
+    new_waypoint["x"] = newX
+    new_waypoint["y"] = newY
 
     # Velocity
     V = waypoint['velocity']*unitsScale
     new_waypoint["V"] = V
 
     # Omega
-    omega = waypoint['angularVelocity']
+    omega = -waypoint['angularVelocity']
     new_waypoint["omega"] = omega
 
     # Acc
@@ -87,9 +88,9 @@ for index, waypoint in enumerate(waypoints):
 
         else:
             nextV = nextWaypoint['velocity']*unitsScale
-            nextOmega = nextWaypoint['angularVelocity']
-            nextVl = nextV - nextOmega*config["drivebase"]["halfDBM"]
-            nextVr = nextV + nextOmega*config["drivebase"]["halfDBM"]
+            nextOmega = -nextWaypoint['angularVelocity']
+            nextVl = nextV + nextOmega*config["drivebase"]["halfDBM"]
+            nextVr = nextV - nextOmega*config["drivebase"]["halfDBM"]
 
             accL = (nextVl - Vl) / dt
             accR = (nextVr - Vr) / dt
@@ -105,6 +106,8 @@ for index, waypoint in enumerate(waypoints):
 path.append(segment)
 
 # Stop Events
+
+skip = [0]
 
 stopEvents = []
 for index, point in enumerate(points["waypoints"]):
@@ -122,6 +125,11 @@ for index, point in enumerate(points["waypoints"]):
         stopEvents.append({"commands": commands, "executionBehavior": executionBehavior,
                            "waitTime": waitTime, "waitBehavior": waitBehavior})
 
+        skip.append(skip[-1])
+
+    else:
+        skip.append(skip[-1]+1)
+
 # Markers
 
 markers = [[] for _ in range(len(stopEvents))]
@@ -132,9 +140,12 @@ for marker in points["markers"]:
         commands.append(f"{i}{marker['names'][index*2+1]}")
 
     spline_index = int(marker['position'])
-    time = path[spline_index][int(round(marker['position'] - spline_index, 3) * (1/resolution))]['time']
+    index = round(marker['position'] - spline_index, 3) * (1/resolution)
+    time = path[spline_index][int(index + (skip[spline_index+1] - skip[spline_index])*(1/resolution))]['time']
 
     markers[spline_index].append((time, commands))
+
+# Write Files
 
 with open(path_to_Wfile+".events", 'w') as f:
     f.write(str((stopEvents, markers)))
