@@ -43,6 +43,8 @@ class Motor(_Motor):
                  timeout: float = 60, range: float = 1):
             if Kpid is None:
                 Kp, Ki, Kd = self.posKpid
+            else:
+                Kp, Ki Kd = Kpid
             PID = PIDController(Kp, Ki, Kd, angle, self.getAngle())
 
             st = time()
