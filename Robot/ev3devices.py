@@ -410,13 +410,13 @@ class DualGyro(Gyro):
         return (self.gyro1.getProcessedAngle() + self.gyro2.getProcessedAngle()) / 2
 
     @micropython.native
-    def getRate(self) -> float:
+    def getSpeed(self) -> float:
         """
         Returns the speed of the gyro in degrees per second.
         Returns:
             speed: float
         """
-        return (self.gyro1.getRate() + self.gyro2.getRate()) / 2
+        return (self.gyro1.getSpeed() + self.gyro2.getSpeed()) / 2
 
     @micropython.native
     def reset(self, angle: int = 0) -> None:
