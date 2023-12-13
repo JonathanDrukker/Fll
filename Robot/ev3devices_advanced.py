@@ -44,7 +44,7 @@ class Motor(_Motor):
             if Kpid is None:
                 Kp, Ki, Kd = self.posKpid
             else:
-                Kp, Ki Kd = Kpid
+                Kp, Ki, Kd = Kpid
             PID = PIDController(Kp, Ki, Kd, angle, self.getAngle())
 
             st = time()
