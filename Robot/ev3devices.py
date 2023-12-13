@@ -6,7 +6,7 @@ from mytools import thread, sign
 
 
 motor_ports = {'A': ['0', None], 'B': ['1', None], 'C': ['2', None], 'D': ['3', None]}
-sensor_ports = {'S1': None, 'S2': None, 'S3': None, 'S4': None}
+sensor_ports = {'1': None, '2': None, '3': None, '4': None}
 
 
 class PortError(Exception):
@@ -39,9 +39,10 @@ class Motor:
 
         self.setCommand()
 
-        self.bias = config.bias
+        self.bias = config.bias - self.count() / 2
 
         self.speed_sp = 0
+        self.acc_sp = 0
 
         self.Kp = micropython.const(config.p)
         self.Ks, self.Kv, self.Ka = micropython.const(config.ff)
@@ -56,29 +57,35 @@ class Motor:
         """
         Runs the motor at a given speed and acceleration.
         Uses the ff values to calculate the duty cycle.
+        Needed to run Motor.update() to work.
         Parameters:
             speed: float
             acc: float
         """
-        self.speed_sp = self.Ks*sign(speed) + self.Kv*speed + self.Ka*acc
+        self.speed_sp = speed
+        self.acc_sp = acc
 
     @micropython.native
     @thread
     def update(self) -> None:
         """
-        P controller for the motor speed.
+        FF and P controller for the motor speed.
+        Runs as thread.
         Update time: 10ms.
         """
 
         self.runUpdate = True
         while self.runUpdate:
-            self.dutyCycle(self.speed_sp + self.Kp*(self.speed_sp - self.getSpeed()))
+
+            speed = self.speed_sp + self.Kp*(self.speed_sp - self.getSpeed())
+            self.dutyCycle(self.Ks*sign(speed) + self.Kv*speed + self.Ka*self.acc_sp)
+
             sleep(0.01)
 
     @micropython.native
     def stopUpdate(self) -> None:
         """
-        Stops the PID controller.
+        Stops the update thread.
         """
         self.runUpdate = False
 
@@ -86,20 +93,22 @@ class Motor:
     def runImmediate(self, speed: float = 0, acc: float = 0) -> None:
         """
         Runs the motor at a given speed and acceleration.
-        Does not use the ff values to calculate the duty cycle.
+        Uses P and FF controllers.
+        Runs IMMEDIATELY.
         Parameters:
             speed: float
             acc: float
         """
-        speed_sp = self.Ks*sign(speed) + self.Kv*speed + self.Ka*acc
-        self.dutyCycle(speed_sp + self.Kp*(speed_sp - self.getSpeed()))
+        speed += self.Kp*(speed - self.getSpeed())
+        self.dutyCycle(self.Ks*sign(speed) + self.Kv*speed + self.Ka*acc)
 
     @micropython.native
     def stop(self) -> None:
         """
-        Stops the motor.
+        Stops the motor and sets speed_sp and acc_sp to 0.
         """
         self.speed_sp = 0
+        self.acc_sp = 0
         self.dutyCycle(0)
 
     @micropython.native
@@ -171,8 +180,10 @@ class Motor:
             dutyCycle: int
         """
         self.dutyCycleF.seek(0)
-        if abs(dutyCycle) <= 100: self.dutyCycleF.write(str(int(dutyCycle)))
-        else: self.dutyCycleF.write(str(int(copysign(100, dutyCycle))))
+        if abs(dutyCycle) <= 100:
+            self.dutyCycleF.write(str(int(dutyCycle)))
+        else:
+            self.dutyCycleF.write(str(int(copysign(100, dutyCycle))))
         self.dutyCycleF.flush()
 
     @micropython.native
@@ -268,6 +279,7 @@ class Gyro:
         config: object
         kwargs: dict
     """
+
     def __init__(self, config: object, **kwargs):
 
         self._port = micropython.const(config.port)
@@ -276,7 +288,7 @@ class Gyro:
         if not self.connected():
             raise PortError(self._port)
 
-        self.dir = config.direction
+        self.dir = micropython.const(config.direction)
 
         self.valueF = open("/sys/class/lego-sensor/sensor"+self._portF+"/value0", 'r')
         self.modeF = open("/sys/class/lego-sensor/sensor"+self._portF+"/mode", 'w')
@@ -330,9 +342,9 @@ class Gyro:
         self.bias = angle - self.read()
 
     @micropython.native
-    def calibrate(self) -> None:
+    def calibrate(self, angle: float = 0) -> None:
         """
-        Calibrates the gyro.
+        Calibrates and resets the gyro.
         Used to stop drift.
         GYRO IS NOT ALLOWED TO MOVE WHILE CALIBRATING.
         Calibration time: 2 seconds.
@@ -340,6 +352,7 @@ class Gyro:
         self.setMode("GYRO-CAL")
         sleep(2)
         self.setMode("GYRO-ANG")
+        self.reset(angle)
 
     @micropython.native
     def read(self) -> int:
@@ -384,12 +397,14 @@ class DualGyro(Gyro):
         config2: object
         kwargs: dict
     """
+
     def __init__(self, config1: dict, config2: dict, **kwargs):
         self.gyro1 = Gyro(config1)
         self.gyro2 = Gyro(config2)
 
         for key, value in kwargs.items():
-            setattr(self.gyro1, key, value); setattr(self.gyro2, key, value)
+            setattr(self.gyro1, key, value)
+            setattr(self.gyro2, key, value)
 
     @micropython.native
     def getAngle(self) -> float:
@@ -410,13 +425,13 @@ class DualGyro(Gyro):
         return (self.gyro1.getProcessedAngle() + self.gyro2.getProcessedAngle()) / 2
 
     @micropython.native
-    def getRate(self) -> float:
+    def getSpeed(self) -> float:
         """
         Returns the speed of the gyro in degrees per second.
         Returns:
             speed: float
         """
-        return (self.gyro1.getRate() + self.gyro2.getRate()) / 2
+        return (self.gyro1.getSpeed() + self.gyro2.getSpeed()) / 2
 
     @micropython.native
     def reset(self, angle: int = 0) -> None:
@@ -456,6 +471,7 @@ class LightSensor:
         config: object
         kwargs: dict
     """
+
     def __init__(self, config: object, **kwargs):
 
         self._port = micropython.const(config.port)
@@ -547,7 +563,7 @@ def SensorPorts() -> None:
     for dir in listdir("/sys/class/lego-sensor"):
         with open("/sys/class/lego-sensor/"+dir+"/address", 'r') as f:
             addr = f.read()
-        sensor_ports[addr[12]] = dir[6]
+        sensor_ports[addr[12]] = dir[6:]
 
 
 @micropython.native
