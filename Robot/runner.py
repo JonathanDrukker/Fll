@@ -20,6 +20,7 @@ class Runner:
     """
 
     lock = allocate_lock()
+    run = True
 
     def __init__(self, config: dict):
 
@@ -65,21 +66,24 @@ class Runner:
         self.odometry.resetPos(path[0][0][1], path[0][0][2], path[0][0][3])
         self.odometry.start()
 
-        # self.stopEventsHandler(stopEvents[0])
+        self.stopEventsHandler(stopEvents[0])
 
         self.timer = Timer()
 
         for index, spline in enumerate(path):
 
-            # self.markersHandler(markers[index])
+            self.markersHandler(markers[index])
 
             log, count = self.spline(spline, _log)
             self.timer.pause()
 
-            # self.stopEventsHandler(stopEvents[index+1])
-
             counter += count
             logs.append(log)
+
+            if not self.run:
+                break
+
+            self.stopEventsHandler(stopEvents[index+1])
 
             self.timer.play()
 
@@ -112,7 +116,7 @@ class Runner:
 
         index = 0
 
-        while True:
+        while self.run:
 
             cTime = self.timer.get()
 
@@ -211,6 +215,7 @@ class Runner:
 
     @micropython.native
     def exit(self):
+        self.run = False
         self.drivebase.stopUpdate()
         self.lm.stopUpdate()
         self.rm.stopUpdate()
