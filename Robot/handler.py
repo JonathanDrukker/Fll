@@ -1,76 +1,92 @@
 import micropython
+from os import system
 from pybricks.hubs import EV3Brick
 from pybricks.parameters import Button
+from pybricks.media.ev3dev import Image
 from mytools import thread
 from time import sleep
 
 
 class Handler:
+    """
+    Handler class.
+    """
+
+    pressed = []
+
     def __init__(self, runner: object):
         self.runner = runner
         self.ev3 = EV3Brick()
 
-    @micropython.native
     def main(self):
         """
         Main function.
         """
+        self.startExit()
 
-        count = log = [[] for _ in range(5)]
+        self.ev3.screen.clear()
+        self.ev3.screen.load_image(Image('/home/robot/Robot/Media/RunButtons.png'))
 
         self.runner.drivebase.update()
 
+        print("Choose a path:")
+
         while True:
-            pressed = self.ev3.buttons.pressed()[0] or [None]
 
-            if pressed[0] is not None:
-                self.startExit()
+            pressed = self.ev3.buttons.pressed()
 
-                if len(pressed) > 1:
+            if pressed:
+
+                if pressed[0] == Button.LEFT_UP:
                     break
 
-                elif pressed[0] == Button.CENTER:
-                    log[0], count[0] = self.runner.path('1', 0.175, 1, True)
+                if pressed[0] == Button.CENTER:
+                    log, count = self.runner.path('1', 0.175, 1, True)
+
+                    with open('/home/robot/Logs/runtime1.log', 'w') as f:
+                        f.write(str(log))
+                    print("Count 1:", count)
 
                 elif pressed[0] == Button.LEFT:
-                    log[1], count[1] = self.runner.path('2', 0.175, 1, True)
+                    log, count = self.runner.path('2', 0.175, 1, True)
+
+                    with open('/home/robot/Logs/runtime2.log', 'w') as f:
+                        f.write(str(log))
+                    print("Count 2:", count)
 
                 elif pressed[0] == Button.UP:
-                    log[2], count[2] = self.runner.path('3', 0.175, 1, True)
+                    log, count = self.runner.path('3', 0.175, 1, True)
+
+                    with open('/home/robot/Logs/runtime3.log', 'w') as f:
+                        f.write(str(log))
+                    print("Count 3:", count)
 
                 elif pressed[0] == Button.RIGHT:
-                    log[3], count[3] = self.runner.path('4', 0.175, 1, True)
+                    log, count = self.runner.path('4', 0.175, 1, True)
+
+                    with open('/home/robot/Logs/runtime4.log', 'w') as f:
+                        f.write(str(log))
+                    print("Count 4:", count)
 
                 elif pressed[0] == Button.DOWN:
-                    log[4], count[4] = self.runner.path('5', 0.175, 1, True)
+                    log, count = self.runner.path('5', 0.175, 1, True)
 
-            else:
-                self.stopExit()
+                    with open('/home/robot/Logs/runtime5.log', 'w') as f:
+                        f.write(str(log))
+                    print("Count 5:", count)
 
-        self.runner.exit()
-
-        for i in range(5):
-            with open('runtime'+str(i)+'.log', 'w') as f:
-                f.write(str(log[i]))
-                print("Count", str(i)+":", count[i])
-
-    @micropython.native
     @thread
     def startExit(self):
         """
         Start exit thread.
         """
 
-        self.runExit = True
-        while self.runExit and not self.ev3.buttons.pressed():
+        while True:
+
+            pressed = self.ev3.buttons.pressed()
+            if pressed and pressed[0] == Button.LEFT_UP:
+                break
+
             sleep(0.25)
 
-        if self.run:
-            self.runner.exit()
-
-    @micropython.native
-    def stopExit(self):
-        """
-        Stop exit thread.
-        """
-        self.runExit = False
+        system('nice -n -20 bash /home/robot/Commands/terminate.sh')
