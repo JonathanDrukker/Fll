@@ -47,20 +47,21 @@ for index, waypoint in enumerate(waypoints):
     # Time
     new_waypoint["time"] = waypoint["time"]
 
+    # Coords
+    x, y = waypoint['pose']['translation']['x']*unitsScale, waypoint['pose']['translation']['y']*unitsScale
+    l = config["robot"]["length"]/2 - config["robot"]["wheelAxis"]  # noqa
+    newX, newY = x + l * cos(waypoint['pose']['rotation']['radians']), y + l * sin(waypoint['pose']['rotation']['radians'])
+
+    new_waypoint["x"] = newX
+    new_waypoint["y"] = newY
+
     # Theata
     theata = waypoint['pose']['rotation']['radians']
     if (theata < 0):
         theata += 2*pi
-    theata = 2*pi - theata
+    elif theata != 2*pi:
+        theata = 2*pi - theata
     new_waypoint["theata"] = theata
-
-    # Coords
-    x, y = waypoint['pose']['translation']['x']*unitsScale, waypoint['pose']['translation']['y']*unitsScale
-    l = config["robot"]["length"]/2 - config["robot"]["wheelAxis"]  # noqa
-    newX, newY = x + l * cos(theata), y + l * sin(theata)
-
-    new_waypoint["x"] = newX
-    new_waypoint["y"] = newY
 
     # Velocity
     V = waypoint['velocity']*unitsScale
