@@ -1,4 +1,4 @@
-#!/home/robot/Robot/micropython
+#!/home/robot/Robot/micropython.sh
 
 import micropython; micropython.opt_level(3)
 from runner import Runner
