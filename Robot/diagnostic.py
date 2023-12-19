@@ -1,4 +1,4 @@
-#!/home/robot/Robot/micropython
+#!/home/robot/Robot/micropython.sh
 
 from runner import Runner
 from config import config
