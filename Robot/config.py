@@ -21,7 +21,7 @@ class config(JSONToClass):
     Parameters:
         filename: str
     """
-    def __init__(self, filename: str = 'config.json'):
+    def __init__(self, filename: str = '/home/robot/Robot/config.json'):
         with open(filename, 'r') as f:
             super().__init__(json.load(f))
 
