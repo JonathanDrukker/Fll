@@ -34,7 +34,7 @@ Vl, Vr = 0, 0
 
 for index, waypoint in enumerate(waypoints):
 
-    if waypoint['velocity'] == 0 and len(segment) > 0:
+    if waypoint['velocity'] == 0:
         if StopPoint:
             path.append(segment)
             segment = []
@@ -59,8 +59,7 @@ for index, waypoint in enumerate(waypoints):
     theata = waypoint['pose']['rotation']['radians']
     if (theata < 0):
         theata += 2*pi
-    elif theata != 2*pi:
-        theata = 2*pi - theata
+
     new_waypoint["theata"] = theata
 
     # Velocity
@@ -68,8 +67,7 @@ for index, waypoint in enumerate(waypoints):
     new_waypoint["V"] = V
 
     # Omega
-    omega = -waypoint['angularVelocity']
-    new_waypoint["omega"] = omega
+    new_waypoint["omega"] = waypoint['angularVelocity']
 
     # Acc
     if index == len(waypoints)-1:
@@ -89,9 +87,9 @@ for index, waypoint in enumerate(waypoints):
 
         else:
             nextV = nextWaypoint['velocity']*unitsScale
-            nextOmega = -nextWaypoint['angularVelocity']
-            nextVl = nextV + nextOmega*config["drivebase"]["halfDBM"]
-            nextVr = nextV - nextOmega*config["drivebase"]["halfDBM"]
+            nextOmega = nextWaypoint['angularVelocity']
+            nextVl = nextV - nextOmega*config["drivebase"]["halfDBM"]
+            nextVr = nextV + nextOmega*config["drivebase"]["halfDBM"]
 
             accL = (nextVl - Vl) / dt
             accR = (nextVr - Vr) / dt
