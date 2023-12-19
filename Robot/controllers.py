@@ -131,7 +131,7 @@ class RAMSETEController:
             Omega += self.b*V*Ey
         Omega *= self.halfDBM
 
-        return v + Omega, v - Omega
+        return v - Omega, v + Omega
 
     @micropython.native
     def setGains(self, b: float, zeta: float) -> None:
