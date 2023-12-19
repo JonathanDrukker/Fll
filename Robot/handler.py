@@ -37,11 +37,7 @@ class Handler:
 
             if pressed:
 
-                if pressed[0] == Button.LEFT_UP:
-                    break
-
                 if pressed[0] == Button.CENTER:
-                    log, count = self.runner.path('1', 0.175, 1, True)
 
                     with open('/home/robot/Logs/runtime1.log', 'w') as f:
                         f.write(str(log))
@@ -87,6 +83,6 @@ class Handler:
             if pressed and pressed[0] == Button.LEFT_UP:
                 break
 
-            sleep(0.25)
+            sleep(0.2)
 
         system('nice -n -20 bash /home/robot/Commands/terminate.sh')
