@@ -27,7 +27,7 @@ class Runner:
         self.drivebase = DriveBase(config)
         self.odometry = DiffrentialDriveOdometry(self.drivebase, self.lock)
 
-        self.sensorbase = Sensorbase(config.light, self)
+        self.sensorbase = Sensorbase(config.light, self.drivebase)
 
         self.lm = Motor(config.motors.left)
         self.rm = Motor(config.motors.right)
@@ -51,11 +51,11 @@ class Runner:
 
         print("Loading Path...")
         st = time()
-        with open("Paths/"+filename+".path", "r") as f:
+        with open("/home/robot/Robot/Paths/"+filename+".path", "r") as f:
             path = eval(f.read())
         print("Loaded path in", time()-st)
 
-        with open("Paths/"+filename+".events", "r") as f:
+        with open("/home/robot/Robot/Paths/"+filename+".events", "r") as f:
             stopEvents, markers = eval(f.readline())
 
         logs = []
