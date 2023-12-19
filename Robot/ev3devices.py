@@ -253,7 +253,7 @@ class Motor:
             _dutys.append(duty)
 
         if save:
-            with open(filename, 'w') as f:
+            with open("/home/robot/Logs/"+filename, 'w') as f:
                 f.write(str({'duty': _dutys, 'velocity': _speed, 'acceleration': acc}))
 
         return _dutys, _speed, acc
