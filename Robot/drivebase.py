@@ -137,9 +137,9 @@ class DriveBase:
         dutyR, speedR, accR = self.rm.analysis(False)
 
         if save:
-            with open('left'+filename, 'w') as f:
+            with open('/home/robot/Logs/left'+filename, 'w') as f:
                 f.write(str({'duty': dutyL, 'velocity': speedL, 'acceleration': accL}))
-            with open('right'+filename, 'w') as f:
+            with open('/home/robot/Logs/right'+filename, 'w') as f:
                 f.write(str({'duty': dutyR, 'velocity': speedR, 'acceleration': accR}))
 
         return [dutyL, speedL, accL], [dutyR, speedR, accR]
