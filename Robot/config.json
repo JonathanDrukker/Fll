@@ -1,55 +1,52 @@
 {
     "robot": {
         "width": 13.5,
-        "length": 16.5,
-        "wheelAxis": 5.8
+        "length": 17.5,
+        "wheelAxis": 5.75
     },
     "wheel": {
-        "radius": 4.075,
-        "diameter": 8.15,
-        "circumference": 25.603980126756814,
+        "radius": 4.05,
+        "diameter": 8.1,
+        "circumference": 25.446900494077325,
         "width": 1.5
     },
     "drivebase": {
-        "DBM": 9.7,
-        "halfDBM": 4.85,
+        "DBM": 8.75,
+        "halfDBM": 4.375,
         "motor": {
             "left": {
-                "port": "D",
+                "port": "B",
                 "direction": 1,
                 "bias": 0,
-                "maxSpeed": 899.5,
                 "ff": [
-                    10,
-                    0.11457,
-                    0.00015159
+                    6.5,
+                    0.069965,
+                    1.68065e-05
                 ],
-                "p": 0.06
+                "p": 0.08
             },
             "right": {
-                "port": "C",
+                "port": "A",
                 "direction": 1,
                 "bias": 0,
-                "maxSpeed":   915.5,
                 "ff": [
-                    8,
-                    0.11334,
-                    -4.7674e-06
+                    8.5,
+                    0.07508,
+                    0.00020665
                 ],
-                "p": 0.04
+                "p": 0.08
             }
         }
     },
     "motors": {
         "left": {
-            "port": "A",
+            "port": "C",
             "direction": 1,
             "bias": 0,
-            "maxSpeed": 0.0,
             "ff": [
-                0,
-                0,
-                0
+                22,
+                0.078554,
+                0.00066784
             ],
             "p": 0.06,
             "speedKpid": [
@@ -58,20 +55,19 @@
                 0.0
             ],
             "posKpid": [
-                0.0,
-                0.0,
-                0.0
+                20.0,
+                0.1,
+                0.3
             ]
         },
         "right": {
-            "port": "B",
+            "port": "D",
             "direction": 1,
             "bias": 0,
-            "maxSpeed": 0.0,
             "ff": [
-                0,
-                0,
-                0
+                19,
+                0.0074657,
+                9.4884e-05
             ],
             "p": 0.06,
             "speedKpid": [
@@ -80,22 +76,30 @@
                 0.0
             ],
             "posKpid": [
-                0.0,
-                0.0,
-                0.0
+                20.0,
+                0.1,
+                0.3
             ]
         }
     },
     "gyro": {
         "S1": {
-            "port": "3",
-            "direction": 1,
+            "port": "1",
+            "direction": -1,
             "bias": 0
         },
         "S2": {
-            "port": "4",
-            "direction": 1,
+            "port": "2",
+            "direction": -1,
             "bias": 0
+        }
+    },
+    "light": {
+        "SL": {
+            "port": "3"
+        },
+        "SR": {
+            "port": "4"
         }
     }
 }
