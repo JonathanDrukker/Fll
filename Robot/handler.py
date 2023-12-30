@@ -1,7 +1,6 @@
-import micropython
 from os import system
 from pybricks.hubs import EV3Brick
-from pybricks.parameters import Button
+from pybricks.parameters import Button, Color
 from pybricks.media.ev3dev import Image
 from mytools import thread
 from time import sleep
@@ -38,34 +37,35 @@ class Handler:
             if pressed:
 
                 if pressed[0] == Button.CENTER:
+                    log, count = self.runner.path('1', 0.02, 0.5, True)
 
                     with open('/home/robot/Logs/runtime1.log', 'w') as f:
                         f.write(str(log))
                     print("Count 1:", count)
 
-                elif pressed[0] == Button.LEFT:
+                elif pressed[0] == Button.UP:
                     log, count = self.runner.path('2', 0.175, 1, True)
 
                     with open('/home/robot/Logs/runtime2.log', 'w') as f:
                         f.write(str(log))
                     print("Count 2:", count)
 
-                elif pressed[0] == Button.UP:
-                    log, count = self.runner.path('3', 0.175, 1, True)
+                elif pressed[0] == Button.RIGHT:
+                    log, count = self.runner.path('3', 0.085, 0.7, True)
 
                     with open('/home/robot/Logs/runtime3.log', 'w') as f:
                         f.write(str(log))
                     print("Count 3:", count)
 
-                elif pressed[0] == Button.RIGHT:
-                    log, count = self.runner.path('4', 0.175, 1, True)
+                elif pressed[0] == Button.DOWN:
+                    log, count = self.runner.path('4', 0.045, 0.8, True)
 
                     with open('/home/robot/Logs/runtime4.log', 'w') as f:
                         f.write(str(log))
                     print("Count 4:", count)
 
-                elif pressed[0] == Button.DOWN:
-                    log, count = self.runner.path('5', 0.175, 1, True)
+                elif pressed[0] == Button.LEFT:
+                    log, count = self.runner.path('5', 0.085, 0.9, True)
 
                     with open('/home/robot/Logs/runtime5.log', 'w') as f:
                         f.write(str(log))
@@ -85,4 +85,5 @@ class Handler:
 
             sleep(0.2)
 
+        self.ev3.light.on(Color.RED)
         system('nice -n -20 bash /home/robot/Commands/terminate.sh')
