@@ -1,5 +1,5 @@
 import micropython
-from time import time
+from time import time, sleep
 from ev3devices import LightSensor
 from controllers import PIDController
 from mytools import mean
@@ -121,16 +121,22 @@ class Sensorbase:
 
         while (lRFL != rfl and rRFL != rfl and time() - st < timeout):
 
-            correction = PID.correction(lRFL - rRFL)  # check if this is correct
+            while (lRFL != rfl and rRFL != rfl and time() - st < timeout):
 
-            avgRFL = mean(lRFL, rRFL)
-            if avgRFL == 0:
-                self.drivebase.run_tank(correction, -correction)
-            elif avgRFL > rfl:
-                self.drivebase.run_tank(speed+correction, speed-correction)
-            else:
-                self.drivebase.run_tank(-speed+correction, -speed-correction)
+                avgRFL = mean(lRFL, rRFL)
+                correction = PID.correction(rRFL - lRFL)
+                print(lRFL, rRFL, correction)
 
+                if avgRFL == 0:
+                    self.drivebase.run_tank(correction, -correction)
+                elif avgRFL > rfl:
+                    self.drivebase.run_tank(speed+correction, speed-correction)
+                else:
+                    self.drivebase.run_tank(-speed+correction, -speed-correction)
+
+                lRFL, rRFL = self.ll.getReflect(), self.rl.getReflect()
+
+            self.drivebase.stop()
+
+            sleep(0.1)
             lRFL, rRFL = self.ll.getReflect(), self.rl.getReflect()
-
-        self.drivebase.stop()
