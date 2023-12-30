@@ -205,58 +205,30 @@ class Motor:
             save: bool
             filename: str
         Returns:
-            dutys: list
-            speeds: list
-            acc: list
+            data: list
         """
 
-        times = []
-        speeds = []
-        dutys = []
+        data = []
+
+        self.dutyCycle(-100)
+        sleep(3)
 
         st = time()
-        for duty in range(101):
+        for duty in range(-100, 101):
 
             self.dutyCycle(duty)
 
             loopT = time()
             while time() - loopT < 0.5:
-
-                times.append(time() - st)
-                speeds.append(self.frequency() / 2)
-                dutys.append(duty)
+                data.append([time() - st, duty, self.getSpeed()])
 
         self.dutyCycle(0)
 
-        acc = []
-        _speed = []
-        _dutys = []
-
-        dutys.append(101)
-
-        for duty in range(101):
-
-            index = dutys.index(duty)
-            slice = speeds[index:dutys.index(duty+1)]
-
-            maxV = max(slice)
-            maxVIndex = slice.index(maxV) + index
-
-            deltaT = times[maxVIndex] - times[index]
-
-            if deltaT == 0:
-                acc.append(0)
-            else:
-                acc.append(maxV / deltaT)
-
-            _speed.append(maxV)
-            _dutys.append(duty)
-
         if save:
             with open("/home/robot/Logs/"+filename, 'w') as f:
-                f.write(str({'duty': _dutys, 'velocity': _speed, 'acceleration': acc}))
+                f.write(str(data))
 
-        return _dutys, _speed, acc
+        return data
 
     @micropython.native
     def connected(self) -> bool:
@@ -418,11 +390,14 @@ class DualGyro(Gyro):
     @micropython.native
     def getProcessedAngle(self) -> float:
         """
-        Returns the angle of the gyro in degrees.
+        Returnsx the angle of the gyro in degrees.
         Returns:
             angle: float - [0, 360]
         """
-        return (self.gyro1.getProcessedAngle() + self.gyro2.getProcessedAngle()) / 2
+        theata = self.getAngle() % 360
+        if theata < 0:
+            theata += 360
+        return theata
 
     @micropython.native
     def getSpeed(self) -> float:
