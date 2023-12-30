@@ -133,13 +133,13 @@ class DriveBase:
             [rightDuty, rightSpeed, rightAcceleration]: [list, list, list]
         """
 
-        dutyL, speedL, accL = self.lm.analysis(False)
-        dutyR, speedR, accR = self.rm.analysis(False)
+        dataL = self.lm.analysis(False)
+        dataR = self.rm.analysis(False)
 
         if save:
             with open('/home/robot/Logs/left'+filename, 'w') as f:
-                f.write(str({'duty': dutyL, 'velocity': speedL, 'acceleration': accL}))
+                f.write(str(dataL))
             with open('/home/robot/Logs/right'+filename, 'w') as f:
-                f.write(str({'duty': dutyR, 'velocity': speedR, 'acceleration': accR}))
+                f.write(str(dataR))
 
-        return [dutyL, speedL, accL], [dutyR, speedR, accR]
+        return dataL, dataR
