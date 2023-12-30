@@ -27,7 +27,7 @@ class Runner:
         self.drivebase = DriveBase(config)
         self.odometry = DiffrentialDriveOdometry(self.drivebase, self.lock)
 
-        self.sensorbase = Sensorbase(config.light, self.drivebase)
+        self.sensorbase = Sensorbase(config.sensorbase, config.light, self.drivebase)
 
         self.lm = Motor(config.motors.left)
         self.rm = Motor(config.motors.right)

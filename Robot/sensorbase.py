@@ -15,7 +15,9 @@ class Sensorbase:
         drivebase: object
     """
 
-    def __init__(self, light: object, drivebase: object):
+    def __init__(self, config: object, light: object, drivebase: object):
+
+        self.config = config
 
         self.ll = LightSensor(light.SL)
         self.rl = LightSensor(light.SR)
@@ -104,7 +106,7 @@ class Sensorbase:
             self.drivebase.run_tank(speed + corr, speed - corr)
 
     @micropython.native
-    def Box(self, speed: int, rfl: int, Kp: float, Ki: float, Kd: float, timeout: float = 60) -> None:
+    def Box(self, speed: int, rfl: int, Kp: float = None, Ki: float = None, Kd: float = None, timeout: float = 60) -> None:
         """
         Used to follow a line with the drivebase using light sensors and the gyro.
         Parameters:
@@ -113,6 +115,11 @@ class Sensorbase:
             side: int - Side
             timeout: float - Max time
         """
+        if Kp:
+            pass
+        else:
+            Kp, Ki, Kd = self.config.box_Kpid
+
         PID = PIDController(Kp, Ki, Kd, rfl)
 
         st = time()
