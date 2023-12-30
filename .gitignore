@@ -133,3 +133,4 @@ dmypy.json
 *.events
 todo.txt
 *.path
+currentPath.txt
