@@ -4,7 +4,8 @@ import os
 mainpath = os.path.dirname(os.getcwd())
 
 
-filename = input("Enter file name without the file extension: ")
+with open("currentPath.txt", 'r') as f:
+    filename = f.read()
 
 path_to_JSON = mainpath + f'\FLL\deploy\pathplanner\generatedJSON\{filename}.wpilib.json'
 path_to_Rfile = mainpath + f'\FLL\deploy\pathplanner\{filename}.path'
