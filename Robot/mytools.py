@@ -35,10 +35,7 @@ def sign(x: float) -> int:
     Parameters: x: float
     Returns: y
     """
-    if x == 0:
-        return x
-    else:
-        return x/abs(x)
+    return x/abs(x)
 
 
 @micropython.native
