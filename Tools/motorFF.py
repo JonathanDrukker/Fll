@@ -7,8 +7,9 @@ from math import copysign
 print("Starting...")
 
 graph = True
+path = "Data/Analysis/analysis.log"
 
-with open("Data/main.py.err.log", 'r') as f:
+with open(path, 'r') as f:
 
     data_time = {"time": [], "duty": [], "speed": [], "acceleration": []}
 
@@ -31,11 +32,8 @@ for time, vel in zip(data_time["time"][1:], data_time["speed"][1:]):
 
 data_time["acceleration"].insert(0, data_time["acceleration"][0])
 
-for i in range(100):
-    data_time["acceleration"][i] *= -1
-
 data_duty = {"time": [], "duty": [], "speed": [], "acceleration": []}
-for duty in range(-100, 101):
+for duty in range(0, 101):
     startIndex = data_time["duty"].index(duty)
     if duty != 100:
         endIndex = data_time["duty"].index(duty+1)-1
@@ -56,16 +54,16 @@ for duty in range(-100, 101):
 
 Ks = max([i for i, x in enumerate(data_duty["speed"]) if x == 0])
 
-x1 = np.array(data_duty["speed"])
-x2 = np.array(data_duty["acceleration"])
-y = np.array(data_duty["duty"])
+x1 = np.array(data_duty["speed"][Ks:])
+x2 = np.array(data_duty["acceleration"][Ks:])
+y = np.array(data_duty["duty"][Ks:])
 
 x = np.array((np.sign(x1), x1, x2)).T
 fit = sm.OLS(y, x).fit()
 _Ks, Kv, _Ka = fit.params
 
-Ka = 1/((data_duty["acceleration"][-1] - data_duty["acceleration"][0]) /
-        (data_duty["time"][-1]-data_duty["time"][0]))
+Ka = 1/((data_duty["acceleration"][-1] - data_duty["acceleration"][Ks]) /
+        (data_duty["time"][-1]-data_duty["time"][Ks]))
 
 print(Ks, Kv, Ka)
 
