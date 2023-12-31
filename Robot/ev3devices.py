@@ -77,8 +77,11 @@ class Motor:
         self.runUpdate = True
         while self.runUpdate:
 
-            speed = self.speed_sp + self.Kp*(self.speed_sp - self.getSpeed())
-            self.dutyCycle(self.Ks*sign(speed) + self.Kv*speed + self.Ka*self.acc_sp)
+            if self.speed_sp != 0:
+                speed = self.speed_sp + self.Kp*(self.speed_sp - self.getSpeed())
+                self.dutyCycle(self.Ks*sign(speed) + self.Kv*speed + self.Ka*self.acc_sp)
+            else:
+                self.dutyCycle(0)
 
             sleep(0.01)
 
@@ -99,8 +102,11 @@ class Motor:
             speed: float
             acc: float
         """
-        speed += self.Kp*(speed - self.getSpeed())
-        self.dutyCycle(self.Ks*sign(speed) + self.Kv*speed + self.Ka*acc)
+        if speed != 0:
+            speed += self.Kp*(speed - self.getSpeed())
+            self.dutyCycle(self.Ks*sign(speed) + self.Kv*speed + self.Ka*acc)
+        else:
+            self.dutyCycle(0)
 
     @micropython.native
     def stop(self) -> None:
@@ -210,11 +216,8 @@ class Motor:
 
         data = []
 
-        self.dutyCycle(-100)
-        sleep(3)
-
         st = time()
-        for duty in range(-100, 101):
+        for duty in range(0, 101):
 
             self.dutyCycle(duty)
 
