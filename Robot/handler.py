@@ -1,6 +1,6 @@
 from os import system
 from pybricks.hubs import EV3Brick
-from pybricks.parameters import Button, Color
+from pybricks.parameters import Button
 from pybricks.media.ev3dev import Image
 from mytools import thread
 from time import sleep
@@ -93,5 +93,4 @@ class Handler:
 
             sleep(0.2)
 
-        self.ev3.light.on(Color.RED)
         system('nice -n -20 bash /home/robot/Commands/terminate.sh')
