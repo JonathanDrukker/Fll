@@ -6,10 +6,10 @@ def calcCoords(x, y, Dx, Dy, length):
 
     length += 0.738 / 2
 
-    theata = atan2(Dy, Dx)
+    theata = atan2(Dx, Dy)
 
-    x += length * sin(theata)
-    y += length * cos(theata)
+    x += length * cos(theata)
+    y += length * sin(theata)
 
     return x, y, degrees(theata)
 
