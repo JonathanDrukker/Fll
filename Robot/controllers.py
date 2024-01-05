@@ -13,7 +13,7 @@ class PIDController:
         target: float - Target value
         feedback: float - Feedback value
     """
-    def __init__(self, Kp: float, Ki: float, Kd: float, target: float, feedback: float = 0):
+    def __init__(self, Kp: float, Ki: float, Kd: float, target: float):
 
         self.Kp = Kp
         self.Ki = Ki
