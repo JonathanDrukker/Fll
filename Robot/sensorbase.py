@@ -2,7 +2,7 @@ import micropython
 from time import time, sleep
 from ev3devices import LightSensor
 from controllers import PIDController
-from mytools import mean
+from mytools import mean, between
 
 
 class Sensorbase:
@@ -51,29 +51,48 @@ class Sensorbase:
             self.drivebase.run_tank(speed+correction, speed-correction)
 
     @micropython.native
-    def Turn(self, speed: float, angle: float, target: float,
-             Kp: float, Ki: float, Kd: float, timeout: float = 60) -> None:
+    def Turn(self, target: float, Kp: float, Ki: float, Kd: float, range: float = 1, timeout: float = 60):
         """
         Used to turn with the drivebase using the gyro and PID.
         Parameters:
-            speed: float - Speed
-            angle: float - Angle
-            target: float - Target
+            target: float - Target [0-360]
             Kp: float - Proportional gain
             Ki: float - Integral gain
             Kd: float - Derivative gain
+            error: float - Error
             timeout: float - Max time
         """
+
         PID = PIDController(Kp, Ki, Kd, target)
 
         st = time()
 
-        while (self.drivebase.gyro.angle() < angle and
+        error = target - self.drivebase.gyro.getProcessedAngle()
+        if error < -180:
+            error += 360
+
+        while (not between(error, 0, range) and
                time() - st < timeout):
 
-            correction = PID.correction(self.drivebase.gyro.angle())
+            while (not between(error, 0, range) and
+                   time() - st < timeout):
 
-            self.drivebase.run_tank(speed+correction, -speed-correction)
+                error = target - self.drivebase.gyro.getProcessedAngle()
+                if error < -180:
+                    error += 360
+
+                correction = PID.correction(error)
+
+                print(error)
+
+                self.drivebase.run_tank(correction, -correction)
+
+            self.drivebase.stop()
+            sleep(0.1)
+
+            error = target - self.drivebase.gyro.getProcessedAngle()
+            if error > 180:
+                error -= 360
 
     @micropython.native
     def LineFollow(self, speed: float, dist: float, rfl: int, side: int,
