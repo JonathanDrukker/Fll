@@ -115,7 +115,9 @@ class Motor:
         """
         self.speed_sp = 0
         self.acc_sp = 0
-        self.dutyCycle(0)
+        self.dutyCycleF.seek(0)
+        self.dutyCycleF.write("0")
+        self.dutyCycleF.flush()
 
     @micropython.native
     def getAngle(self) -> float:
