@@ -37,21 +37,21 @@ class Handler:
             if pressed:
 
                 if pressed[0] == Button.CENTER:
-                    log, count = self.runner.path('1', 0.02, 0.5, True)
+                    log, count = self.runner.path('1', 0.025, 0.5, True)
 
                     with open('/home/robot/Logs/runtime1.log', 'w') as f:
                         f.write(str(log))
                     print("Count 1:", count)
 
                 elif pressed[0] == Button.UP:
-                    log, count = self.runner.path('2', 0.01, 0.6, True)
+                    log, count = self.runner.path('2', 0.035, 0.7, True)
 
                     with open('/home/robot/Logs/runtime2.log', 'w') as f:
                         f.write(str(log))
                     print("Count 2:", count)
 
                 elif pressed[0] == Button.RIGHT:
-                    log, count = self.runner.path('3', 0.075, 0.8, True)
+                    log, count = self.runner.path('3', 0.05, 0.6, True)
 
                     with open('/home/robot/Logs/runtime3.log', 'w') as f:
                         f.write(str(log))
