@@ -81,18 +81,16 @@ class Sensorbase:
                 if error < -180:
                     error += 360
 
-                correction = PID.correction(error)
+                correction = PID.correction(None, error)
 
-                print(error)
-
-                self.drivebase.run_tank(correction, -correction)
+                self.drivebase.run_tank(-correction, correction)
 
             self.drivebase.stop()
             sleep(0.1)
 
             error = target - self.drivebase.gyro.getProcessedAngle()
-            if error > 180:
-                error -= 360
+            if error < -180:
+                error += 360
 
     @micropython.native
     def LineFollow(self, speed: float, dist: float, rfl: int, side: int,
@@ -125,7 +123,7 @@ class Sensorbase:
             self.drivebase.run_tank(speed + corr, speed - corr)
 
     @micropython.native
-    def Box(self, speed: int, rfl: int, Kp: float = None, Ki: float = None, Kd: float = None, timeout: float = 60) -> None:
+    def Box(self, rfl: int, speed: int, Kp: float = None, Ki: float = None, Kd: float = None, timeout: float = 60, range: int = 10) -> None:
         """
         Used to follow a line with the drivebase using light sensors and the gyro.
         Parameters:
@@ -134,35 +132,48 @@ class Sensorbase:
             side: int - Side
             timeout: float - Max time
         """
-        if Kp:
-            pass
-        else:
-            Kp, Ki, Kd = self.config.box_Kpid
-
-        PID = PIDController(Kp, Ki, Kd, rfl)
 
         st = time()
 
         lRFL, rRFL = self.ll.getReflect(), self.rl.getReflect()
 
-        while (lRFL != rfl and rRFL != rfl and time() - st < timeout):
+        while not between(lRFL, rfl, range) and not between(rRFL, rfl, range) and time() - st < timeout:
 
-            while (lRFL != rfl and rRFL != rfl and time() - st < timeout):
+            while not between(lRFL, rfl, range) and not between(rRFL, rfl, range) and time() - st < timeout:
 
-                avgRFL = mean(lRFL, rRFL)
-                correction = PID.correction(rRFL - lRFL)
-                print(lRFL, rRFL, correction)
-
-                if avgRFL == 0:
-                    self.drivebase.run_tank(correction, -correction)
-                elif avgRFL > rfl:
-                    self.drivebase.run_tank(speed+correction, speed-correction)
-                else:
-                    self.drivebase.run_tank(-speed+correction, -speed-correction)
+                self.drivebase.run_tank(speed, speed)
 
                 lRFL, rRFL = self.ll.getReflect(), self.rl.getReflect()
-
-            self.drivebase.stop()
+                print(lRFL, rRFL)
 
             sleep(0.1)
-            lRFL, rRFL = self.ll.getReflect(), self.rl.getReflect()
+
+        if between(lRFL, rfl, range):
+
+            self.drivebase.run_tank(0, speed)
+            self.drivebase.lm.stop()
+
+            while not between(rRFL, rfl, range) and time() - st < timeout:
+                while not between(rRFL, rfl, range) and time() - st < timeout:
+
+                    self.drivebase.run_tank(0, speed)
+                    lRFL, rRFL = self.ll.getReflect(), self.rl.getReflect()
+                    print(lRFL, rRFL)
+
+                sleep(0.1)
+                self.drivebase.stop()
+
+        else:
+
+            self.drivebase.run_tank(speed, 0)
+            self.drivebase.rm.stop()
+
+            while not between(lRFL, rfl, range) and time() - st < timeout:
+                while not between(lRFL, rfl, range) and time() - st < timeout:
+
+                    self.drivebase.run_tank(speed, 0)
+                    lRFL, rRFL = self.ll.getReflect(), self.rl.getReflect()
+                    print(lRFL, rRFL)
+
+                sleep(0.1)
+                self.drivebase.stop()
