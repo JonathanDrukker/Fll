@@ -132,7 +132,7 @@ for index, point in enumerate(points["waypoints"]):
 
 # Markers
 
-markers = [[] for _ in range(len(stopEvents))]
+markers = [[] for _ in range(len(stopEvents)-1)]
 for marker in points["markers"]:
 
     commands = []
@@ -141,9 +141,9 @@ for marker in points["markers"]:
 
     spline_index = int(marker['position'])
     index = round(marker['position'] - spline_index, 3) * (1/resolution)
-    time = path[spline_index][int(index + (skip[spline_index+1] - skip[spline_index])*(1/resolution))]['time']
+    time = path[spline_index-skip[spline_index]][int(index + (skip[spline_index+1] - skip[spline_index])*(1/resolution))]['time']
 
-    markers[spline_index].append((time, commands))
+    markers[spline_index-skip[spline_index]].append((time, commands))
 
 # Write Files
 
