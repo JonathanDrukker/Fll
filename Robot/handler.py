@@ -3,7 +3,7 @@ from pybricks.hubs import EV3Brick
 from pybricks.parameters import Button
 from pybricks.media.ev3dev import Image
 from mytools import thread
-from time import sleep
+from time import time, sleep
 
 
 class Handler:
@@ -29,12 +29,20 @@ class Handler:
         self.runner.drivebase.update()
 
         print("Choose a path:")
+        sleep(0.3)
 
         while True:
 
             pressed = self.ev3.buttons.pressed()
 
+            sign = 1 if int(time()*10) % 2 == 0 else -1
+            self.runner.lm.runImmediate(100*sign)
+            self.runner.rm.runImmediate(100*sign)
+
             if pressed:
+
+                self.runner.lm.dutyCycle(0)
+                self.runner.rm.dutyCycle(0)
 
                 if pressed[0] == Button.CENTER:
                     log, count = self.runner.path('1', 0.025, 0.5, True)
@@ -58,7 +66,7 @@ class Handler:
                     print("Count 3:", count)
 
                 elif pressed[0] == Button.DOWN:
-                    log, count = self.runner.path('4', 0.045, 0.8, True)
+                    log, count = self.runner.path('4', 0.025, 0.7, True)
 
                     with open('/home/robot/Logs/runtime4.log', 'w') as f:
                         f.write(str(log))
