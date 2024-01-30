@@ -35,6 +35,7 @@ def sign(x: float) -> int:
     Parameters: x: float
     Returns: y
     """
+    if x == 0: return 0
     return x/abs(x)
 
 
