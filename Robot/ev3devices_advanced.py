@@ -92,6 +92,7 @@ class Motor(_Motor):
         @micropython.native
         def main(speed: float, time: float):
             self.runImmediate(speed)
+            self.runImmediate(speed)
             sleep(time)
             self.stop()
 
