@@ -28,6 +28,10 @@ class Handler:
 
         self.runner.drivebase.update()
 
+        lA = self.runner.lm.getAngle()
+        rA = self.runner.rm.getAngle()
+        Kp = 20
+
         print("Choose a path:")
         sleep(0.3)
 
@@ -36,8 +40,8 @@ class Handler:
             pressed = self.ev3.buttons.pressed()
 
             sign = 1 if int(time()*10) % 2 == 0 else -1
-            self.runner.lm.runImmediate(100*sign)
-            self.runner.rm.runImmediate(100*sign)
+            self.runner.lm.runImmediate(60*sign + Kp*(lA - self.runner.lm.getAngle()))
+            self.runner.rm.runImmediate(60*sign + Kp*(rA - self.runner.rm.getAngle()))
 
             if pressed:
 
@@ -86,6 +90,9 @@ class Handler:
                     self.runner.drivebase.run_tank(500, 600)
                     sleep(0.75)
                     self.runner.drivebase.stop()
+
+                rA = self.runner.rm.getAngle()
+                lA = self.runner.lm.getAngle()
 
     @thread
     def startExit(self):
