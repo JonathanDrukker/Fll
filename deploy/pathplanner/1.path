@@ -1,0 +1,115 @@
+{
+  "waypoints": [
+    {
+      "anchorPoint": {
+        "x": 1.7825,
+        "y": 0.09595957446808506
+      },
+      "prevControl": null,
+      "nextControl": {
+        "x": 1.7825,
+        "y": 0.2180839602174705
+      },
+      "holonomicAngle": 0,
+      "isReversal": false,
+      "velOverride": null,
+      "isLocked": false,
+      "isStopPoint": false,
+      "stopEvent": {
+        "names": [],
+        "executionBehavior": "parallel",
+        "waitBehavior": "none",
+        "waitTime": 0
+      }
+    },
+    {
+      "anchorPoint": {
+        "x": 1.4639936170212766,
+        "y": 0.5378574468085107
+      },
+      "prevControl": {
+        "x": 1.550348598332909,
+        "y": 0.4515024654968782
+      },
+      "nextControl": {
+        "x": 1.550348598332909,
+        "y": 0.4515024654968782
+      },
+      "holonomicAngle": 0,
+      "isReversal": true,
+      "velOverride": null,
+      "isLocked": false,
+      "isStopPoint": true,
+      "stopEvent": {
+        "names": [
+          "runner.drivebase.run_tank",
+          "(100, 100)",
+          "runner.lm.RunTime",
+          "(-1000, 3)"
+        ],
+        "executionBehavior": "sequential",
+        "waitBehavior": "none",
+        "waitTime": 0
+      }
+    },
+    {
+      "anchorPoint": {
+        "x": 1.6034978723404258,
+        "y": 0.40238510638297875
+      },
+      "prevControl": {
+        "x": 1.5100376832435165,
+        "y": 0.4958452954798881
+      },
+      "nextControl": {
+        "x": 1.6801721311840354,
+        "y": 0.32571084753936913
+      },
+      "holonomicAngle": 0,
+      "isReversal": false,
+      "velOverride": null,
+      "isLocked": false,
+      "isStopPoint": false,
+      "stopEvent": {
+        "names": [],
+        "executionBehavior": "parallel",
+        "waitBehavior": "none",
+        "waitTime": 0
+      }
+    },
+    {
+      "anchorPoint": {
+        "x": 2.1,
+        "y": 0.35
+      },
+      "prevControl": {
+        "x": 1.8258257995524807,
+        "y": 0.35
+      },
+      "nextControl": null,
+      "holonomicAngle": 0,
+      "isReversal": false,
+      "velOverride": null,
+      "isLocked": false,
+      "isStopPoint": false,
+      "stopEvent": {
+        "names": [],
+        "executionBehavior": "parallel",
+        "waitBehavior": "none",
+        "waitTime": 0
+      }
+    }
+  ],
+  "maxVelocity": 0.4,
+  "maxAcceleration": 0.1,
+  "isReversed": false,
+  "markers": [
+    {
+      "position": 0.57,
+      "names": [
+        "runner.rm.RunTime",
+        "(-400, 1)"
+      ]
+    }
+  ]
+}
