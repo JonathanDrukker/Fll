@@ -127,10 +127,5 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-*.data
-*.wpilib.json
-*.csv
-*.events
 todo.txt
-*.path
 currentPath.txt
