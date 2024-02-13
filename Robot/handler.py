@@ -69,6 +69,15 @@ class Handler:
                         f.write(str(log))
                     print("Count 3:", count)
 
+                    while not self.ev3.buttons.pressed():
+                        sleep(0.1)
+
+                    self.runner.drivebase.gyro.reset()
+                    self.runner.sensorbase.Drive(400, 30, 0, 10, 0.05, 2, 3)
+                    self.runner.drivebase.run_tank(-1000, -700)
+                    sleep(0.5)
+                    self.runner.drivebase.stop()
+
                 elif pressed[0] == Button.DOWN:
                     log, count = self.runner.path('4', 0.025, 0.7, True)
 
