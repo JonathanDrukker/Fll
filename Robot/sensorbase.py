@@ -40,15 +40,22 @@ class Sensorbase:
         """
         PID = PIDController(Kp, Ki, Kd, target)
 
-        startAngle = mean(self.drivebase.getAngle())
+        startAngle = mean(*self.drivebase.getAngle())
         st = time()
 
-        while (mean(self.drivebase.getAngle()) - startAngle < dist / self.drivebase._wheelCircumference and
+        while ((mean(*self.drivebase.getAngle()) - startAngle)/360 * self.drivebase._wheelCircumference < dist and
                time() - st < timeout):
 
-            correction = PID.correction(self.drivebase.gyro.angle())
+            error = target - self.drivebase.gyro.getProcessedAngle()
+            if error < -180:
+                error += 360
 
-            self.drivebase.run_tank(speed+correction, speed-correction)
+            correction = PID.correction(None, error)
+
+            self.drivebase.run_tank(speed-correction, speed+correction)
+            print(correction, self.drivebase.gyro.getProcessedAngle())
+
+        self.drivebase.stop()
 
     @micropython.native
     def Turn(self, target: float, Kp: float, Ki: float, Kd: float, range: float = 1, timeout: float = 60):
@@ -123,7 +130,8 @@ class Sensorbase:
             self.drivebase.run_tank(speed + corr, speed - corr)
 
     @micropython.native
-    def Box(self, rfl: int, speed: int, Kp: float = None, Ki: float = None, Kd: float = None, timeout: float = 60, range: int = 10) -> None:
+    def Box(self, rfl: int, speed: int, Kp: float = None, Ki: float = None, Kd: float = None, timeout: float = 60,
+            range: int = 10) -> None:
         """
         Used to follow a line with the drivebase using light sensors and the gyro.
         Parameters:
