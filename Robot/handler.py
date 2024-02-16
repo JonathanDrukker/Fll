@@ -56,7 +56,7 @@ class Handler:
                     print("Count 1:", count)
 
                 elif pressed[0] == Button.UP:
-                    log, count = self.runner.path('2', 0.035, 0.7, True)
+                    log, count = self.runner.path('2', 0.025, 0.7, True)
 
                     with open('/home/robot/Logs/runtime2.log', 'w') as f:
                         f.write(str(log))
