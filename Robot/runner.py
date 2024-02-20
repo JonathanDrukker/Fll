@@ -225,8 +225,8 @@ class Runner:
     @micropython.native
     def run2_M3(self):
         self.odometry.stop()
-        self.drivebase.run_tank(-400, -400)
-        sleep(0.75)
+        self.sensorbase.Turn(-90, 25, 10, 0.2, range=2.5, timeout=3)
+        self.sensorbase.Drive(-400, -5, -90, 5, 1, 0.2, timeout=2)
         self.odometry.start()
         self.rm.RunTime(1000, 2.5)
         self.rm.RunTime(-1000, 1, wait=False)
@@ -234,7 +234,7 @@ class Runner:
     @micropython.native
     def run4_M7(self):
         self.odometry.stop()
-        self.drivebase.run_tank(1000, 1000)
+        self.drivebase.run_tank(500, 500)
         sleep(1)
         self.odometry.resetPos(174, 86, 45.00)
         self.odometry.start()
