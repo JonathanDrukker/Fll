@@ -43,7 +43,7 @@ class Sensorbase:
         startAngle = mean(*self.drivebase.getAngle())
         st = time()
 
-        while ((mean(*self.drivebase.getAngle()) - startAngle)/360 * self.drivebase._wheelCircumference < dist and
+        while (abs(mean(*self.drivebase.getAngle()) - startAngle)/360 * self.drivebase._wheelCircumference < abs(dist) and
                time() - st < timeout):
 
             error = target - self.drivebase.gyro.getProcessedAngle()
@@ -89,6 +89,7 @@ class Sensorbase:
                     error += 360
 
                 correction = PID.correction(None, error)
+                print(error, correction)
 
                 self.drivebase.run_tank(-correction, correction)
 
