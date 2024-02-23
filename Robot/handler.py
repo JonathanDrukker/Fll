@@ -86,19 +86,11 @@ class Handler:
                     print("Count 4:", count)
 
                 elif pressed[0] == Button.LEFT:
-                    # log, count = self.runner.path('5', 0.02, 0.6, True)
+                    log, count = self.runner.path('5', 0.025, 0.7, True)
 
-                    # with open('/home/robot/Logs/runtime5.log', 'w') as f:
-                    #     f.write(str(log))
-                    # print("Count 5:", count)
-
-                    self.runner.drivebase.run_tank(500, 600)
-                    sleep(0.5)
-                    self.runner.drivebase.stop()
-                    sleep(2)
-                    self.runner.drivebase.run_tank(500, 600)
-                    sleep(0.75)
-                    self.runner.drivebase.stop()
+                    with open('/home/robot/Logs/runtime5.log', 'w') as f:
+                        f.write(str(log))
+                    print("Count 5:", count)
 
                 rA = self.runner.rm.getAngle()
                 lA = self.runner.lm.getAngle()
