@@ -236,7 +236,7 @@ class Runner:
         self.odometry.stop()
         self.drivebase.run_tank(500, 500)
         sleep(1)
-        self.odometry.resetPos(174, 86, 45.00)
+        self.odometry.resetPos(172, 90, 45)
         self.odometry.start()
         self.rm.RunTime(-200, 2)
         self.lm.RunTime(-1000, 1.5)

@@ -2,19 +2,77 @@
   "waypoints": [
     {
       "anchorPoint": {
-        "x": 1.925,
-        "y": 0.275
+        "x": 1.8985,
+        "y": 0.2095
       },
       "prevControl": null,
       "nextControl": {
-        "x": 1.8028756142506148,
-        "y": 0.2750000000000001
+        "x": 1.8993063829787367,
+        "y": 0.2538510638297857
       },
       "holonomicAngle": 0,
       "isReversal": false,
       "velOverride": null,
       "isLocked": false,
       "isStopPoint": false,
+      "stopEvent": {
+        "names": [
+          "runner.rm.RunTime",
+          "(-700, 1.5, wait=False)",
+          "runner.lm.RunTime",
+          "(300, 1.5, wait=False)"
+        ],
+        "executionBehavior": "parallel",
+        "waitBehavior": "none",
+        "waitTime": 0
+      }
+    },
+    {
+      "anchorPoint": {
+        "x": 1.9,
+        "y": 0.3419063829787234
+      },
+      "prevControl": {
+        "x": 1.9,
+        "y": 0.2787058907185449
+      },
+      "nextControl": {
+        "x": 1.9,
+        "y": 0.5730888883438126
+      },
+      "holonomicAngle": 0,
+      "isReversal": false,
+      "velOverride": null,
+      "isLocked": false,
+      "isStopPoint": false,
+      "stopEvent": {
+        "names": [
+          "runner.rm.RunTime",
+          "(-700, 3)"
+        ],
+        "executionBehavior": "parallel",
+        "waitBehavior": "none",
+        "waitTime": 0
+      }
+    },
+    {
+      "anchorPoint": {
+        "x": 1.5655978723404256,
+        "y": 0.2935
+      },
+      "prevControl": {
+        "x": 1.7709499583408173,
+        "y": 0.2935
+      },
+      "nextControl": {
+        "x": 1.360245786340034,
+        "y": 0.2935
+      },
+      "holonomicAngle": 0,
+      "isReversal": false,
+      "velOverride": null,
+      "isLocked": false,
+      "isStopPoint": true,
       "stopEvent": {
         "names": [],
         "executionBehavior": "parallel",
@@ -24,16 +82,16 @@
     },
     {
       "anchorPoint": {
-        "x": 0.825,
-        "y": 0.275
+        "x": 0.84,
+        "y": 0.29
       },
       "prevControl": {
-        "x": 0.8588858954370007,
-        "y": 0.275
+        "x": 1.3077279533867494,
+        "y": 0.29
       },
       "nextControl": {
-        "x": 0.7911141045629992,
-        "y": 0.275
+        "x": 0.8061141045629995,
+        "y": 0.29
       },
       "holonomicAngle": 0,
       "isReversal": false,
@@ -54,12 +112,37 @@
     },
     {
       "anchorPoint": {
-        "x": 0.75,
-        "y": 0.275
+        "x": 0.72,
+        "y": 0.29
       },
       "prevControl": {
-        "x": 0.8055935652316921,
-        "y": 0.275
+        "x": 0.7755935652316921,
+        "y": 0.29
+      },
+      "nextControl": {
+        "x": 0.7755935652316921,
+        "y": 0.29
+      },
+      "holonomicAngle": 0,
+      "isReversal": true,
+      "velOverride": null,
+      "isLocked": false,
+      "isStopPoint": false,
+      "stopEvent": {
+        "names": [],
+        "executionBehavior": "parallel",
+        "waitBehavior": "none",
+        "waitTime": 0
+      }
+    },
+    {
+      "anchorPoint": {
+        "x": 0.85,
+        "y": 0.29
+      },
+      "prevControl": {
+        "x": 0.7019056662043043,
+        "y": 0.29
       },
       "nextControl": null,
       "holonomicAngle": 0,
@@ -80,17 +163,10 @@
   "isReversed": null,
   "markers": [
     {
-      "position": 0.55,
+      "position": 2.704545454545456,
       "names": [
         "runner.lm.RunTime",
-        "(-300, 1.5)"
-      ]
-    },
-    {
-      "position": 0.8999999999999999,
-      "names": [
-        "runner.lm.RunTime",
-        "(300, 1.5)"
+        "(-500, 1.5)"
       ]
     }
   ]
