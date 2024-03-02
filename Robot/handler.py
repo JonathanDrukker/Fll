@@ -1,6 +1,6 @@
 from os import system
 from pybricks.hubs import EV3Brick
-from pybricks.parameters import Button
+from pybricks.parameters import Button, Color
 from pybricks.media.ev3dev import Image
 from mytools import thread
 from time import time, sleep
@@ -33,7 +33,9 @@ class Handler:
         Kp = 20
 
         print("Choose a path:")
-        sleep(0.3)
+        self.ev3.light.on(Color.ORANGE)
+        sleep(0.5)
+        self.ev3.light.on(Color.GREEN)
 
         while True:
 
@@ -86,7 +88,7 @@ class Handler:
                     print("Count 4:", count)
 
                 elif pressed[0] == Button.LEFT:
-                    log, count = self.runner.path('5', 0.025, 0.7, True)
+                    log, count = self.runner.path('5', 0.045, 0.7, True)
 
                     with open('/home/robot/Logs/runtime5.log', 'w') as f:
                         f.write(str(log))
