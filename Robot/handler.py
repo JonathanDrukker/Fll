@@ -11,7 +11,7 @@ class Handler:
     Handler class.
     """
 
-    pressed = []
+    running = False
 
     def __init__(self, runner: object):
         self.runner = runner
@@ -47,6 +47,8 @@ class Handler:
 
             if pressed:
 
+                self.running = True
+
                 self.runner.lm.dutyCycle(0)
                 self.runner.rm.dutyCycle(0)
 
@@ -71,6 +73,8 @@ class Handler:
                         f.write(str(log))
                     print("Count 3:", count)
 
+                    self.running = False
+
                     while not self.ev3.buttons.pressed():
                         sleep(0.1)
 
@@ -94,8 +98,12 @@ class Handler:
                         f.write(str(log))
                     print("Count 5:", count)
 
+                self.running = False
+
                 rA = self.runner.rm.getAngle()
                 lA = self.runner.lm.getAngle()
+
+                sleep(1)
 
     @thread
     def startExit(self):
@@ -106,8 +114,13 @@ class Handler:
         while True:
 
             pressed = self.ev3.buttons.pressed()
-            if pressed and pressed[0] == Button.LEFT_UP:
-                break
+            if pressed:
+                if pressed[0] == Button.LEFT_UP:
+                    break
+                elif self.running:
+                    self.runner.exit()
+                    sleep(0.5)
+                    self.runner.drivebase.update()
 
             sleep(0.2)
 
