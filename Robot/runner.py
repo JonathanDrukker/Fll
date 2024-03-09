@@ -83,7 +83,7 @@ class Runner:
             counter += count
             logs.append(log)
 
-            if not self.runID:
+            if self.runID != self.lastRunID:
                 break
 
             self.stopEventsHandler(stopEvents[index+1], self.runID)
@@ -91,6 +91,8 @@ class Runner:
             self.timer.play()
 
         self.odometry.stop()
+
+        self.runID = None
 
         print("Finished path")
 
