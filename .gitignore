@@ -129,3 +129,4 @@ dmypy.json
 .pyre/
 todo.txt
 currentPath.txt
+Data/Graphs/graph.data
