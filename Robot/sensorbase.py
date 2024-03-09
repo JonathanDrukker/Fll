@@ -53,7 +53,6 @@ class Sensorbase:
             correction = PID.correction(None, error)
 
             self.drivebase.run_tank(speed-correction, speed+correction)
-            print(correction, self.drivebase.gyro.getProcessedAngle())
 
         self.drivebase.stop()
 
@@ -89,7 +88,6 @@ class Sensorbase:
                     error += 360
 
                 correction = PID.correction(None, error)
-                print(error, correction)
 
                 self.drivebase.run_tank(-correction, correction)
 
@@ -153,7 +151,6 @@ class Sensorbase:
                 self.drivebase.run_tank(speed, speed)
 
                 lRFL, rRFL = self.ll.getReflect(), self.rl.getReflect()
-                print(lRFL, rRFL)
 
             sleep(0.1)
 
@@ -167,7 +164,6 @@ class Sensorbase:
 
                     self.drivebase.run_tank(0, speed)
                     lRFL, rRFL = self.ll.getReflect(), self.rl.getReflect()
-                    print(lRFL, rRFL)
 
                 sleep(0.1)
                 self.drivebase.stop()
@@ -182,7 +178,6 @@ class Sensorbase:
 
                     self.drivebase.run_tank(speed, 0)
                     lRFL, rRFL = self.ll.getReflect(), self.rl.getReflect()
-                    print(lRFL, rRFL)
 
                 sleep(0.1)
                 self.drivebase.stop()
