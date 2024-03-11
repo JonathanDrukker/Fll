@@ -182,7 +182,7 @@ class Runner:
                 sleep(dt)
             self.commands(markers[0][1], "parallel", runID)
             if self.runID == runID:
-                self.markersHandler(markers[1:])
+                self.markersHandler(markers[1:], runID)
 
     @micropython.native
     def commands(self, commands: list, execBehavior: str, runID: int) -> None:
