@@ -16,7 +16,10 @@
       "isLocked": false,
       "isStopPoint": false,
       "stopEvent": {
-        "names": [],
+        "names": [
+          "runner.rm.RunTime",
+          "(400, 0.5)"
+        ],
         "executionBehavior": "parallel",
         "waitBehavior": "none",
         "waitTime": 0
@@ -25,15 +28,15 @@
     {
       "anchorPoint": {
         "x": 0.5613933403323581,
-        "y": 0.9460546370438592
+        "y": 0.92
       },
       "prevControl": {
         "x": 0.49486624442003807,
-        "y": 0.830826326843713
+        "y": 0.8047716897998539
       },
       "nextControl": {
         "x": 0.49486624442003807,
-        "y": 0.830826326843713
+        "y": 0.8047716897998539
       },
       "holonomicAngle": 0,
       "isReversal": true,
@@ -50,15 +53,15 @@
     {
       "anchorPoint": {
         "x": 0.34,
-        "y": 0.91
+        "y": 0.89
       },
       "prevControl": {
-        "x": 0.45970751363629575,
-        "y": 0.91
+        "x": 0.44472553191471703,
+        "y": 0.835412765957773
       },
       "nextControl": {
-        "x": 0.45970751363629575,
-        "y": 0.91
+        "x": 0.44472553191471703,
+        "y": 0.835412765957773
       },
       "holonomicAngle": 0,
       "isReversal": true,
@@ -68,7 +71,7 @@
       "stopEvent": {
         "names": [
           "runner.lm.RunTime",
-          "(800, 1)"
+          "(800, 1, wait=False)"
         ],
         "executionBehavior": "sequential",
         "waitBehavior": "none",
@@ -102,16 +105,16 @@
     },
     {
       "anchorPoint": {
-        "x": 1.1720829787234042,
-        "y": 0.82
+        "x": 1.15,
+        "y": 0.79
       },
       "prevControl": {
-        "x": 0.9011274983155293,
-        "y": 0.82
+        "x": 0.879044519592125,
+        "y": 0.79
       },
       "nextControl": {
-        "x": 1.4877220211609816,
-        "y": 0.82
+        "x": 1.4656390424375774,
+        "y": 0.79
       },
       "holonomicAngle": 0,
       "isReversal": false,
@@ -121,9 +124,9 @@
       "stopEvent": {
         "names": [
           "runner.lm.RunTime",
-          "(1000, 1)"
+          "(1000, 0.5)"
         ],
-        "executionBehavior": "sequential",
+        "executionBehavior": "parallel",
         "waitBehavior": "none",
         "waitTime": 0
       }
@@ -131,15 +134,15 @@
     {
       "anchorPoint": {
         "x": 1.64,
-        "y": 0.82
+        "y": 0.795
       },
       "prevControl": {
         "x": 1.633863006989977,
-        "y": 0.8138630069899773
+        "y": 0.7888630069899774
       },
       "nextControl": {
         "x": 1.6476636086066818,
-        "y": 0.8276636086066819
+        "y": 0.802663608606682
       },
       "holonomicAngle": 0,
       "isReversal": false,
@@ -155,15 +158,15 @@
     },
     {
       "anchorPoint": {
-        "x": 1.7155750873445978,
+        "x": 1.745,
         "y": 0.8955791575460051
       },
       "prevControl": {
-        "x": 1.6808700063280941,
+        "x": 1.7102949189834964,
         "y": 0.8608740765295014
       },
       "nextControl": {
-        "x": 1.6808700063280941,
+        "x": 1.7102949189834964,
         "y": 0.8608740765295014
       },
       "holonomicAngle": 0,
@@ -183,16 +186,16 @@
     },
     {
       "anchorPoint": {
-        "x": 1.95,
-        "y": 0.62
+        "x": 1.8720234042551427,
+        "y": 0.5685000000003263
       },
       "prevControl": {
-        "x": 1.630464703225112,
-        "y": 0.8044837896085686
+        "x": 1.538987234042377,
+        "y": 0.7338085106386242
       },
       "nextControl": {
-        "x": 2.0820044256480603,
-        "y": 0.5437872093178704
+        "x": 2.008554762313816,
+        "y": 0.5007301975741096
       },
       "holonomicAngle": 0,
       "isReversal": false,
@@ -208,12 +211,12 @@
     },
     {
       "anchorPoint": {
-        "x": 2.15,
-        "y": 0.09515319148936169
+        "x": 2.0,
+        "y": 0.15079361702127653
       },
       "prevControl": {
-        "x": 2.15,
-        "y": 0.2073824677822278
+        "x": 2.0,
+        "y": 0.2630228933141424
       },
       "nextControl": null,
       "holonomicAngle": 0,
@@ -230,7 +233,7 @@
     }
   ],
   "maxVelocity": 0.3,
-  "maxAcceleration": 0.1,
+  "maxAcceleration": 0.15,
   "isReversed": null,
   "markers": [
     {

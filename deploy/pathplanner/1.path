@@ -45,7 +45,7 @@
           "runner.drivebase.run_tank",
           "(100, 100)",
           "runner.lm.RunTime",
-          "(-1000, 3)"
+          "(-1000, 1.5)"
         ],
         "executionBehavior": "sequential",
         "waitBehavior": "none",
@@ -101,14 +101,14 @@
     }
   ],
   "maxVelocity": 0.4,
-  "maxAcceleration": 0.1,
+  "maxAcceleration": 0.15,
   "isReversed": false,
   "markers": [
     {
-      "position": 0.57,
+      "position": 0.56,
       "names": [
         "runner.rm.RunTime",
-        "(-400, 1)"
+        "(-500, 1)"
       ]
     }
   ]
