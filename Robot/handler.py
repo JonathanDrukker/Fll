@@ -32,6 +32,8 @@ class Handler:
         rA = self.runner.rm.getAngle()
         Kp = 20
 
+        self.runner.preload('1')
+
         print("Choose a path:")
         self.ev3.light.on(Color.ORANGE)
         sleep(0.5)
@@ -41,9 +43,9 @@ class Handler:
 
             pressed = self.ev3.buttons.pressed()
 
-            sign = 1 if int(time()*10) % 2 == 0 else -1
-            self.runner.lm.runImmediate(60*sign + Kp*(lA - self.runner.lm.getAngle()))
-            self.runner.rm.runImmediate(60*sign + Kp*(rA - self.runner.rm.getAngle()))
+            sign = 1 if int(time()*5) % 2 == 0 else -1
+            self.runner.lm.runImmediate(250*sign + Kp*(lA - self.runner.lm.getAngle()))
+            self.runner.rm.runImmediate(250*sign + Kp*(rA - self.runner.rm.getAngle()))
 
             if pressed:
 
@@ -59,12 +61,16 @@ class Handler:
                         f.write(str(log))
                     print("Count 1:", count)
 
+                    self.runner.preload('2')
+
                 elif pressed[0] == Button.UP:
                     log, count = self.runner.path('2', 0.025, 0.7, True)
 
                     with open('/home/robot/Logs/runtime2.log', 'w') as f:
                         f.write(str(log))
                     print("Count 2:", count)
+
+                    self.runner.preload('3')
 
                 elif pressed[0] == Button.RIGHT:
                     log, count = self.runner.path('3', 0.05, 0.6, True)
@@ -84,12 +90,16 @@ class Handler:
                     sleep(0.5)
                     self.runner.drivebase.stop()
 
+                    self.runner.preload('4')
+
                 elif pressed[0] == Button.DOWN:
                     log, count = self.runner.path('4', 0.025, 0.7, True)
 
                     with open('/home/robot/Logs/runtime4.log', 'w') as f:
                         f.write(str(log))
                     print("Count 4:", count)
+
+                    self.runner.preload('5')
 
                 elif pressed[0] == Button.LEFT:
                     log, count = self.runner.path('5', 0.045, 0.7, True)
