@@ -23,6 +23,9 @@ class Runner:
     runID = None
     lastRunID = None
 
+    __preloadPathName = None
+    __preloadPath = None
+
     def __init__(self, config: dict):
 
         self.drivebase = DriveBase(config)
@@ -52,11 +55,12 @@ class Runner:
 
         self.runID = (self.lastRunID or 0) + 1; self.lastRunID = self.runID
 
-        print("Loading Path...")
-        st = time()
-        with open("/home/robot/Robot/Paths/"+filename+".path", "r") as f:
-            path = eval(f.read())
-        print("Loaded path in", time()-st)
+        if self.__preloadPathName == filename:
+            path = self.__preloadPath
+        else:
+            path = self.load(filename)
+        self.__preloadPathName = None
+        self.__preloadPath = None
 
         with open("/home/robot/Robot/Paths/"+filename+".events", "r") as f:
             stopEvents, markers = eval(f.readline())
@@ -222,6 +226,27 @@ class Runner:
             return None, index
 
     @micropython.native
+    def load(self, filename: str):
+        print("Loading Path...")
+        st = time()
+        with open("/home/robot/Robot/Paths/"+filename+".path", "r") as f:
+            path = eval(f.read())
+        print("Loaded path in", time()-st)
+        return path
+
+    @micropython.native
+    def preload(self, filename: str):
+        collect()
+        self.__preloadPath = self.load(filename)
+        self.__preloadPathName = filename
+
+    @micropython.native
+    def unload(self):
+        self.__preloadPath = None
+        self.__preloadPathName = None
+        collect()
+
+    @micropython.native
     def exit(self):
         self.runID = None
         self.drivebase.stopUpdate()
@@ -232,8 +257,8 @@ class Runner:
     @micropython.native
     def run2_M3(self):
         self.odometry.stop()
-        self.sensorbase.Turn(-90, 15, 5, 0.2, range=2.5, timeout=3)
-        self.sensorbase.Drive(-400, -5, -90, 5, 1, 0.2, timeout=2)
+        self.sensorbase.Turn(-90, 15, 5, 0.5, range=5, timeout=2)
+        self.sensorbase.Drive(-400, -5, -90, 5, 1, 0.2, timeout=1)
         self.odometry.start()
         self.rm.RunTime(1000, 2.5)
         self.rm.RunTime(-1000, 1, wait=False)
@@ -241,10 +266,18 @@ class Runner:
 
     @micropython.native
     def run4_M7(self):
+
+        @thread
+        def base():
+            sleep(2)
+            self.rm.RunTime(1000, 1)
+
         self.odometry.stop()
         self.drivebase.run_tank(500, 500)
         sleep(1)
+        self.drivebase.stop()
         self.odometry.resetPos(172, 90, 45)
         self.odometry.start()
-        self.rm.RunTime(-400, 2)
+        self.rm.RunTime(-200, 2)
         self.lm.RunTime(-1000, 1.5)
+        base()
