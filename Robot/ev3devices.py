@@ -272,6 +272,8 @@ class Gyro:
 
         self.bias = config.bias - self.read()
 
+        self._lastData = 0
+
         for key, value in kwargs.items():
             setattr(self, key, value)
 
@@ -337,7 +339,10 @@ class Gyro:
             value: int
         """
         self.valueF.seek(0)
-        return int(self.valueF.read()) * self.dir
+        data = self.valueF.read()
+        if data.strip().lstrip("-").isdigit():
+            self._lastData = data
+        return int(self._lastData) * self.dir
 
     @micropython.native
     def setMode(self, mode: str = "GYRO-ANG") -> None:
