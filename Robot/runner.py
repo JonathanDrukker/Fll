@@ -3,6 +3,7 @@ from gc import collect
 from _thread import allocate_lock, start_new_thread
 from mytools import thread, Timer
 from time import time, sleep
+from math import pi
 from controllers import RAMSETEController
 from odometry import DiffrentialDriveOdometry
 from drivebase import DriveBase
@@ -263,6 +264,15 @@ class Runner:
         self.rm.RunTime(1000, 2.5)
         self.rm.RunTime(-1000, 1, wait=False)
         sleep(0.1)
+
+    @micropython.native
+    def run2_M11(self):
+        self.odometry.stop()
+        self.drivebase.run_tank(600, 600)
+        self.lm.RunTime(-1000, 3.25)
+        self.odometry.resetPos(101, 72, -pi/2)
+        self.odometry.start()
+        self.lm.RunTime(1000, 4, wait=False)
 
     @micropython.native
     def run4_M7(self):
