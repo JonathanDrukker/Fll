@@ -16,7 +16,10 @@
       "isLocked": false,
       "isStopPoint": false,
       "stopEvent": {
-        "names": [],
+        "names": [
+          "runner.rm.RunTime",
+          "(300, 0.3)"
+        ],
         "executionBehavior": "parallel",
         "waitBehavior": "none",
         "waitTime": 0
@@ -42,10 +45,8 @@
       "isStopPoint": true,
       "stopEvent": {
         "names": [
-          "runner.drivebase.run_tank",
-          "(200, 200)",
-          "runner.lm.RunTime",
-          "(-1000, 1.5)"
+          "runner.run1",
+          "()"
         ],
         "executionBehavior": "sequential",
         "waitBehavior": "none",
@@ -58,12 +59,12 @@
         "y": 0.39
       },
       "prevControl": {
-        "x": 1.5100376832435165,
-        "y": 0.48346018909690935
+        "x": 1.5100376832435156,
+        "y": 0.48346018909691013
       },
       "nextControl": {
-        "x": 1.6801721311840354,
-        "y": 0.3133257411563904
+        "x": 1.665875946822553,
+        "y": 0.32762192551787295
       },
       "holonomicAngle": 0,
       "isReversal": false,
@@ -79,12 +80,12 @@
     },
     {
       "anchorPoint": {
-        "x": 2.0845106382978726,
-        "y": 0.3683611589043151
+        "x": 2.1,
+        "y": 0.36
       },
       "prevControl": {
-        "x": 1.8103364378503533,
-        "y": 0.3683611589043151
+        "x": 1.8258257995524807,
+        "y": 0.36
       },
       "nextControl": null,
       "holonomicAngle": 0,
@@ -105,7 +106,7 @@
   "isReversed": false,
   "markers": [
     {
-      "position": 0.56,
+      "position": 0.55,
       "names": [
         "runner.rm.RunTime",
         "(-500, 1)"

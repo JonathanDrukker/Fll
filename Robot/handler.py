@@ -44,8 +44,8 @@ class Handler:
             pressed = self.ev3.buttons.pressed()
 
             sign = 1 if int(time()*5) % 2 == 0 else -1
-            self.runner.lm.runImmediate(250*sign + Kp*(lA - self.runner.lm.getAngle()))
-            self.runner.rm.runImmediate(250*sign + Kp*(rA - self.runner.rm.getAngle()))
+            self.runner.lm.runImmediate(200*sign + Kp*(lA - self.runner.lm.getAngle()))
+            self.runner.rm.runImmediate(200*sign + Kp*(rA - self.runner.rm.getAngle()))
 
             if pressed:
 
@@ -93,7 +93,7 @@ class Handler:
                     self.runner.preload('4')
 
                 elif pressed[0] == Button.DOWN:
-                    log, count = self.runner.path('4', 0.025, 0.7, True)
+                    log, count = self.runner.path('4', 0.02, 0.7, True)
 
                     with open('/home/robot/Logs/runtime4.log', 'w') as f:
                         f.write(str(log))
@@ -102,7 +102,7 @@ class Handler:
                     self.runner.preload('5')
 
                 elif pressed[0] == Button.LEFT:
-                    log, count = self.runner.path('5', 0.045, 0.7, True)
+                    log, count = self.runner.path('5', 0.035, 0.7, True)
 
                     with open('/home/robot/Logs/runtime5.log', 'w') as f:
                         f.write(str(log))
@@ -128,9 +128,16 @@ class Handler:
                 if pressed[0] == Button.LEFT_UP:
                     break
                 elif self.running:
-                    self.runner.exit()
-                    sleep(0.5)
-                    self.runner.drivebase.update()
+                    st = time()
+                    while time()-st < 0.5:
+                        if self.ev3.buttons.pressed():
+                            pass
+                        else:
+                            break
+                    else:
+                        self.runner.exit()
+                        sleep(0.5)
+                        self.runner.drivebase.update()
 
             sleep(0.2)
 

@@ -89,6 +89,7 @@ class Runner:
             logs.append(log)
 
             if self.runID != self.lastRunID:
+                print("Stopped path")
                 break
 
             self.stopEventsHandler(stopEvents[index+1], self.runID)
@@ -256,6 +257,13 @@ class Runner:
         self.odometry.stop()
 
     @micropython.native
+    def run1(self):
+        self.odometry.stop()
+        self.drivebase.run_tank(400, 400)
+        self.lm.RunTime(-1000, 1.75)
+        self.odometry.start()
+
+    @micropython.native
     def run2_M3(self):
         self.odometry.stop()
         self.sensorbase.Turn(-90, 15, 5, 0.5, range=5, timeout=2)
@@ -289,5 +297,5 @@ class Runner:
         self.odometry.resetPos(172, 90, 45)
         self.odometry.start()
         self.rm.RunTime(-200, 2)
-        self.lm.RunTime(-1000, 1.5)
+        self.lm.RunTime(-800, 1.5)
         base()
