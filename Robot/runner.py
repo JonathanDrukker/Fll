@@ -297,5 +297,5 @@ class Runner:
         self.odometry.resetPos(172, 90, 45)
         self.odometry.start()
         self.rm.RunTime(-200, 2)
-        self.lm.RunTime(-800, 1.5)
+        self.lm.RunTime(-600, 1.5)
         base()

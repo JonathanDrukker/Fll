@@ -73,6 +73,7 @@ class Handler:
                     self.runner.preload('3')
 
                 elif pressed[0] == Button.RIGHT:
+                    # 0.05, 0.6
                     log, count = self.runner.path('3', 0.05, 0.6, True)
 
                     with open('/home/robot/Logs/runtime3.log', 'w') as f:
@@ -85,7 +86,7 @@ class Handler:
                         sleep(0.1)
 
                     self.runner.drivebase.gyro.reset()
-                    self.runner.sensorbase.Drive(400, 30, 0, 10, 0.05, 2, 3)
+                    self.runner.sensorbase.Drive(400, 35, 0, 10, 0.05, 2, 3)
                     self.runner.drivebase.run_tank(-1000, -700)
                     sleep(0.5)
                     self.runner.drivebase.stop()
@@ -102,7 +103,8 @@ class Handler:
                     self.runner.preload('5')
 
                 elif pressed[0] == Button.LEFT:
-                    log, count = self.runner.path('5', 0.035, 0.7, True)
+                    # log, count = self.runner.path('5', 0.035, 0.7, True)
+                    log, count = self.runner.path('5', 0.02, 0.65, True)
 
                     with open('/home/robot/Logs/runtime5.log', 'w') as f:
                         f.write(str(log))
