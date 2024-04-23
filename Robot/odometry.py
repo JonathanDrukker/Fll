@@ -15,7 +15,7 @@ class DiffrentialDriveOdometry:
         y: float
         theata: float
     """
-    def __init__(self, drivebase: object, lock: LockType, x: int = 0, y: int = 0, theata: int = 0):
+    def __init__(self, drivebase: object, lock: LockType, x: float = 0, y: float = 0, theata: float = 0):
 
         self.lock = lock
 
